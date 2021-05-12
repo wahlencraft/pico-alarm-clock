@@ -9,8 +9,8 @@
 
 #include <helpers.h>
 
-#define CLK_PIN 26
-#define DIO_PIN 27
+#define CLK_PIN 27
+#define DIO_PIN 26
 #define BUZ_PIN 15
 #define INTERACT_PIN 22
 #define CONTINUE_PIN 21
@@ -33,7 +33,7 @@ static datetime_t t = {
 static char strBuff[63];
 
 bool sleepMode = true;
-int buttonStatus = 0;
+int buttonBuffer = 0;
 
 
 // Functions
@@ -48,10 +48,15 @@ static void display_h_min(void) {
   TM1637_display_both(t.hour, t.min, true);
 }
 
-void gpio_callback(uint gpio, uint32_t events) {
+void increment_with_wrap(int *num, int wrap) {
+  if (*num < wrap - 1) { (*num)++;} else {*num = 0;}
+}
+
+static void gpio_callback(uint gpio, uint32_t events) {
   printf("Interrupted by %d\n", gpio);
   sleepMode = false;
-  buttonStatus = gpio;
+  buttonBuffer = gpio;
+  printf("  buttonBuffer = %d\n", buttonBuffer);
 }
 
 void show_next_min() {
@@ -92,7 +97,7 @@ int main() {
   TM1637_clear();
   printf("\n--NEW TEST--\n");
   
-  datetime_t t_alarm = {
+  datetime_t t_SETT_ALARM = {
           .year  = -1,
           .month = -1,
           .day   = -1,
@@ -109,11 +114,18 @@ int main() {
   // Start the RTC
   rtc_init();
   rtc_set_datetime(&t);
+  
+  // Setting cases
+  #define SETT_NONE 0
+  #define SETT_BRIGHT 1
+  #define SETT_CLOCK 2
+  #define SETT_ALARM 3
+  #define SETT_DONE 4
 
   printf("Start main loop\n");
   display_h_min();
   sleepMode = true;
-  buttonStatus = 0;
+  buttonBuffer = 0;
 
   // Main loop
   while (true) {
@@ -123,28 +135,99 @@ int main() {
       // Interrupted from sleepmode
       rtc_disable_alarm();
       printf("Woke up by interupt!\n");
-      while (true) {
-        switch (buttonStatus) {
-          case 0:
-            // Do nothing
+      int setting = 1, button;
+      buttonBuffer = 0;
+      while (setting != 0) {
+        printf("Switch!\n");
+        switch (setting) {
+          
+          case SETT_BRIGHT:
+            TM1637_display_word("br:", true);
+            int level = TM1637_get_brightness();
+            TM1637_display_right(level, false);
+            while (setting == SETT_BRIGHT) {
+              button = buttonBuffer;
+              buttonBuffer = 0;
+              //printf("Brightnes, last clicked: %d\n", button);
+              switch (button) {
+                case 0:
+                  break;
+                case NEXT_PIN:
+                  setting++;
+                  break;
+                case CONTINUE_PIN:
+                  increment_with_wrap(&level, 8);
+                  TM1637_display_right(level, false);
+                  break;
+                case INTERACT_PIN:
+                  TM1637_set_brightness(level);
+                  TM1637_display_right(level, false);
+                  break;
+                default:
+                  assert(button == NEXT_PIN);
+              }
+            }
+          
+          case SETT_CLOCK:
+            TM1637_display_word("SEt", true);
+            while (setting == SETT_CLOCK) {
+              button = buttonBuffer;
+              buttonBuffer = 0;
+              switch (button) {  
+                case 0:
+                  break;
+                case NEXT_PIN:
+                  printf("E?\n");
+                  setting++;
+                  break;
+                default:
+                  printf("ERROR SETT_CLOCK\n");
+              }
+            }
+        
+          case SETT_ALARM:
+            printf("Setting = %d\n", setting);
+            TM1637_display_word("ALAr", true);
+            while (setting == SETT_ALARM) {
+              button = buttonBuffer;
+              buttonBuffer = 0;
+              switch (button) {  
+                case 0:
+                  break;
+                case NEXT_PIN:
+                  setting++;
+                  break;
+                default:
+                  printf("ERROR SETT_ALARM\n");
+              }
+            }
+          
+          case SETT_DONE:
+            printf("Setting = %d\n", setting);
+            TM1637_display_word("done", true);
+            while (setting == SETT_DONE) {
+              button = buttonBuffer;
+              buttonBuffer = 0;
+              switch (button) {  
+                case 0:
+                  break;
+                case NEXT_PIN:
+                  setting = 1; // wrap aroud to first setting
+                  break;
+                case INTERACT_PIN:
+                  display_h_min();
+                  setting = SETT_NONE;
+                  sleepMode = true;
+                  break;
+              }
+            }
             break;
-          case NEXT_PIN:
-            printf(" NEXT\n");
-            break;
-          case CONTINUE_PIN:
-            printf(" CONTINUE\n");
-            break;
-          case INTERACT_PIN:
-            printf(" INTERACT\n");
-            break;
+          
           default:
             // Should not happen
-            printf("Runntime Error, buttonStatus = %d\n", buttonStatus);
-            return -1;
+            printf("Runntime Error, buttonBuffer = %d\n", buttonBuffer);
+          return -1;
         }
-        buttonStatus = 0;
-        uart_default_tx_wait_blocking();
-        __wfi();
       }
     }
   }
