@@ -5,6 +5,20 @@
 #include <pico/util/datetime.h>
 #include <PicoTM1637.h>
 
+static char strBuff[63];
+
+void display_min_sec(void) {
+  datetime_t t;
+  rtc_get_datetime(&t);
+  TM1637_display_both(t.min, t.sec, true);
+}
+
+void display_h_min(void) {
+  datetime_t t;
+  rtc_get_datetime(&t);
+  TM1637_display_both(t.hour, t.min, true);
+}
+
 /* Increment a datetime struct. Set year, month and day to -1.
  *
  * datetime   Pointer to datetime struct.
@@ -36,3 +50,6 @@ void increment_datetime(datetime_t *t, int startIndex) {
   }
 }
 
+void increment_with_wrap(int *num, int wrap) {
+  if (*num < wrap - 1) { (*num)++;} else {*num = 0;}
+}
