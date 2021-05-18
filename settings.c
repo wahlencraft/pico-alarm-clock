@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <pico/stdlib.h>
+#include <hardware/sync.h>
 #include <PicoTM1637.h>
 #include <helpers.h>
 
@@ -13,15 +14,26 @@
 
 extern struct GlobBinder *state;
 
+/* INTERNAL HELPER */
+int fetch_button_with_irq_off(void) {
+  static uint32_t irqStatus;
+  int button;
+  irqStatus = save_and_disable_interrupts();
+  button = state->buttonBuffer;
+  state->buttonBuffer = 0;
+  restore_interrupts(irqStatus);
+  return button;
+}
+
+/* SETTINGS */
+
 void brightness_setting(const int settingNum) {
   TM1637_display_word("br:", true);
   int level = TM1637_get_brightness(), button;
   state->setting = settingNum;
   TM1637_display_right(level, false);
   while (state->setting == settingNum) {
-    button = state->buttonBuffer;
-    state->buttonBuffer = 0;
-    //printf("Brightnes, last clicked: %d\n", button);
+    button = fetch_button_with_irq_off();
     switch (button) {
       case 0:
         break;
@@ -46,8 +58,7 @@ void set_clock_setting(const int settingNum) {
   TM1637_display_word("SEt", true);
   int button;
   while (state->setting == settingNum) {
-    button = state->buttonBuffer;
-    state->buttonBuffer = 0;
+    button = fetch_button_with_irq_off();
     switch (button) {  
       case 0:
         break;
@@ -62,12 +73,11 @@ void set_clock_setting(const int settingNum) {
 }
 
 void set_alarm_setting(const int settingNum) { 
-   printf("Setting = %d\n", state->setting);
-   TM1637_display_word("ALAr", true);
-   int button;
-   while (state->setting == settingNum) {
-     button = state->buttonBuffer;
-     state->buttonBuffer = 0;
+  printf("Setting = %d\n", state->setting);
+  TM1637_display_word("ALAr", true);
+  int button;
+  while (state->setting == settingNum) {
+     button = fetch_button_with_irq_off();
      switch (button) {  
        case 0:
          break;
@@ -85,8 +95,7 @@ void done_setting(const int settingNum) {
   TM1637_display_word("done", true);
   int button;
   while (state->setting == settingNum) {
-    button = state->buttonBuffer;
-    state->buttonBuffer = 0;
+    button = fetch_button_with_irq_off();
     switch (button) {  
       case 0:
         break;
