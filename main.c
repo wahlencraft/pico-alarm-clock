@@ -81,10 +81,6 @@ int main() {
   TM1637_clear();
   printf("\n--NEW TEST--\n");
   
-  // Switch to XOSC
-  uart_default_tx_wait_blocking();
-  sleep_run_from_xosc();
-
   // Start the RTC
   rtc_init();
   datetime_t t = {
@@ -96,6 +92,12 @@ int main() {
     .min = 0,
     .sec = 0
   };
+  
+  // Switch to XOSC
+  uart_default_tx_wait_blocking();
+  sleep_run_from_xosc();
+  TM1637_refresh_frequency();
+  
   rtc_set_datetime(&t);
   
   // Setting cases
@@ -118,7 +120,7 @@ int main() {
       // Interrupted from sleepmode
       rtc_disable_alarm();
       printf("Woke up by interupt!\n");
-      int button; //remove
+      int button;
       state->setting = 1;
       state->buttonBuffer = 0;
       while (state->setting != 0) {
