@@ -14,9 +14,9 @@
 #define CLK_PIN 27
 #define DIO_PIN 26
 #define BUZ_PIN 15
-#define INTERACT_PIN 22
-#define CONTINUE_PIN 21
-#define NEXT_PIN 20
+#define RIGHT_BUTTON 22
+#define MIDDLE_BUTTON 21
+#define LEFT_BUTTON 20
 #define BUZZER_DELAY 500
 
 // Global declarations
@@ -74,9 +74,9 @@ int main() {
   TM1637_init(CLK_PIN, DIO_PIN);
   gpio_init(BUZ_PIN);
   gpio_set_dir(BUZ_PIN, GPIO_OUT);
-  setup_button(NEXT_PIN);
-  setup_button(CONTINUE_PIN);
-  setup_button(INTERACT_PIN);
+  setup_button(LEFT_BUTTON);
+  setup_button(MIDDLE_BUTTON);
+  setup_button(RIGHT_BUTTON);
 
   TM1637_clear();
   printf("\n--NEW TEST--\n");
