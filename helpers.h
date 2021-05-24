@@ -21,4 +21,6 @@ void increment_datetime(datetime_t *t, int startIndex);
 
 void increment_with_wrap(int *num, int wrap);
 
+void decrement_with_wrap(int *num, int wrap);
+
 #endif //HELPERS_H_

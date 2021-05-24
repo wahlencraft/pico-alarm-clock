@@ -51,5 +51,9 @@ void increment_datetime(datetime_t *t, int startIndex) {
 }
 
 void increment_with_wrap(int *num, int wrap) {
-  if (*num < wrap - 1) { (*num)++;} else {*num = 0;}
+  *num = (*num < wrap - 1) ? *num + 1 : 0;
+}
+
+void decrement_with_wrap(int *num, int wrap) {
+  *num = (*num > 0) ? *num - 1 : wrap - 1;
 }

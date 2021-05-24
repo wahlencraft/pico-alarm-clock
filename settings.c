@@ -41,7 +41,7 @@ void show_time_as_setting(Times clockState, datetime_t *time, bool newState) {
   uint8_t *timeStart = &(time->dotw);
   switch (clockState) {
     case WEEKDAY:
-      TM1637_display_word(weekdays[clockState], true);
+      TM1637_display_word(weekdays[time->dotw], true);
       break;
     case HOUR ... SECOND:
       if (newState) {
@@ -54,6 +54,30 @@ void show_time_as_setting(Times clockState, datetime_t *time, bool newState) {
     case TIMES_DONE:
       TM1637_display_word(labels[clockState], true);
   }
+}
+
+void in_or_decrement_time_setting(Times clockState, datetime_t *time, bool increment) {
+  int maxForClockState[] = {7, 24, 60};
+  int8_t *timeStart = &(time->dotw);
+  int value = (int) timeStart[clockState];
+  printf("Increment %d", value);
+  if (increment) {
+    increment_with_wrap(&value, maxForClockState[clockState]);
+  } else {
+    decrement_with_wrap(&value, maxForClockState[clockState]);
+  }
+  printf(" to %d\n", value);
+  timeStart[clockState] = (int8_t) value;
+  rtc_set_datetime(time);
+  show_time_as_setting(clockState, time, false);
+}
+
+inline void increment_time_setting(Times clockState, datetime_t *time) {
+  in_or_decrement_time_setting(clockState, time, true);
+}
+
+inline void decrement_time_setting(Times clockState, datetime_t *time) {
+  in_or_decrement_time_setting(clockState, time, false);
 }
 
 /* SETTINGS */
@@ -117,7 +141,6 @@ void set_clock_setting(const int settingNum) {
               // the display.
               if (oldSec != time.sec) {
                 oldSec = time.sec;
-                printf("  Show time as setting\n");
                 show_time_as_setting(setClockState, &time, false);
               }
               break;
@@ -136,16 +159,13 @@ void set_clock_setting(const int settingNum) {
               break;
             case MIDDLE_BUTTON:
               /* Action
-               * - WEEKDAY, hour, minute: Decrement TODO
+               * - WEEKDAY, hour, minute: Decrement
                * - SECONDS: Zero TODO
                * - DONE: Do nothing
                */
               switch (setClockState) {
-                case WEEKDAY:
-                  printf("Weekday\n");
-                  break;
-                case HOUR:
-                  printf("Hour\n");
+                case WEEKDAY ... MINUTE:
+                  decrement_time_setting(setClockState, &time);
                   break;
                 default:
                   printf("Set clock state error: out of bounds\n");
@@ -153,11 +173,17 @@ void set_clock_setting(const int settingNum) {
               break;
             case RIGHT_BUTTON:
               /* Action
-               * - WEEKDAY, hour, minute: Increment TODO
+               * - WEEKDAY, hour, minute: Increment
                * - SECONDS: Zero TODO
                * - DONE: Exit set clock mode
                */
               switch (setClockState) {
+                case WEEKDAY ... MINUTE:
+                  increment_time_setting(setClockState, &time);
+                  break;
+                case SECOND:
+                  // TODO
+                  break;
                 case TIMES_DONE:
                   setClockMode = false;
                   stay = false;
