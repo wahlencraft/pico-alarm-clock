@@ -32,7 +32,6 @@ int fetch_button_with_irq_off(void) {
 }
 
 void show_time_as_setting(Times clockState, datetime_t *time, bool newState) {
-  printf("Show time as setting!\n");
   char *labels[] = {
     "da:", "Hr:", "mi:", "SE:", "done"
   };
@@ -42,7 +41,6 @@ void show_time_as_setting(Times clockState, datetime_t *time, bool newState) {
   uint8_t *timeStart = &(time->dotw);
   switch (clockState) {
     case WEEKDAY:
-      printf("This is weekday\n");
       TM1637_display_word(weekdays[clockState], true);
       break;
     case HOUR ... SECOND:
@@ -51,12 +49,10 @@ void show_time_as_setting(Times clockState, datetime_t *time, bool newState) {
         // clockState has changed since last call (by user input).
         TM1637_display_word(labels[clockState], true);
       }
-      printf("This is %d\n", timeStart[clockState]);
       TM1637_display_right(timeStart[clockState], true);
       break;
     case TIMES_DONE:
       TM1637_display_word(labels[clockState], true);
-      printf("This is done\n");
   }
 }
 
@@ -92,50 +88,58 @@ void brightness_setting(const int settingNum) {
 void set_clock_setting(const int settingNum) {
   TM1637_display_word("SEt", true);
   int button;
-  while (state->setting == settingNum) {
+  bool stay = true;
+  while (stay) {
     button = fetch_button_with_irq_off();
     switch (button) {  
       case 0:
         break;
       case LEFT_BUTTON:
-        printf("E?\n");
+        // Increment setting state, exit
+        stay = false;
         state->setting++;
         break;
       case RIGHT_BUTTON:
         // Go into "set clock mode"
         ;
-        printf("Go into 'set clock mode'\n");
         datetime_t time;
         bool setClockMode = true;
         // initilize "set clock mode"
         Times setClockState = WEEKDAY;
         int8_t oldSec = -1;
-        printf("setClockState: %d\n", setClockState);
+        printf("  setClockState: %d\n", setClockState);
         while (setClockMode) {
           button = fetch_button_with_irq_off();
           rtc_get_datetime(&time);
           switch (button) {
-            case 0:
+            case 0: // no button has been pressed
               // In case clock has changed (by time passing) we need to update
               // the display.
               if (oldSec != time.sec) {
                 oldSec = time.sec;
+                printf("  Show time as setting\n");
                 show_time_as_setting(setClockState, &time, false);
               }
               break;
             case LEFT_BUTTON:
-              // go to next clock setting
-              // WEEKDAY -> HOUR -> MINUTE -> SECONDS -> DONE
-              //    ^                                      |
-              //    |______________________________________|
-              //
+              /* Go to next clock setting
+               *
+               * WEEKDAY -> HOUR -> MINUTE -> SECONDS -> DONE
+               *    ^                                      |
+               *    |______________________________________|
+               */
               setClockState = (setClockState + 1) % TIMES_LEN;
               // update display
-              printf("setClockState: %d\n", setClockState);
+              printf("  setClockState: %d\n", setClockState);
               rtc_get_datetime(&time);
               show_time_as_setting(setClockState, &time, true);
               break;
             case MIDDLE_BUTTON:
+              /* Action
+               * - WEEKDAY, hour, minute: Decrement TODO
+               * - SECONDS: Zero TODO
+               * - DONE: Do nothing
+               */
               switch (setClockState) {
                 case WEEKDAY:
                   printf("Weekday\n");
@@ -148,6 +152,19 @@ void set_clock_setting(const int settingNum) {
               }
               break;
             case RIGHT_BUTTON:
+              /* Action
+               * - WEEKDAY, hour, minute: Increment TODO
+               * - SECONDS: Zero TODO
+               * - DONE: Exit set clock mode
+               */
+              switch (setClockState) {
+                case TIMES_DONE:
+                  setClockMode = false;
+                  stay = false;
+                  break;
+                default:
+                  printf("Error: 'set clock state' -> 'right button' : out of bounds.\n");
+              }
               break;
           }
         }

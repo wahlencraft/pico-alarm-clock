@@ -31,10 +31,10 @@ static char strBuff[63];
 /* FUNCTIONS */
 
 void gpio_callback(uint gpio, uint32_t events) {
-  printf("Interrupted by %d\n", gpio);
+  printf("    { Interrupted by %d\n", gpio);
   state->sleepMode = false;
   state->buttonBuffer = gpio;
-  printf("  buttonBuffer = %d\n", state->buttonBuffer);
+  printf("      buttonBuffer = %d }\n", state->buttonBuffer);
 }
 
 void setup_button(int gpio) {
@@ -124,19 +124,26 @@ int main() {
       state->setting = 1;
       state->buttonBuffer = 0;
       while (state->setting != 0) {
-        printf("Switch!\n");
+        printf("Outer setting loop. Case is %d\n", state->setting);
         switch (state->setting) {
           
           case SETT_BRIGHT:
+            printf(" Enter SETT_BRIGHT\n");
             brightness_setting(SETT_BRIGHT);
+            break;
           
           case SETT_CLOCK:
+            printf(" Enter SETT_CLOCK\n");
             set_clock_setting(SETT_CLOCK);
+            break;
         
           case SETT_ALARM:
+            printf(" Enter SETT_ALARM\n");
             set_alarm_setting(SETT_ALARM);
+            break;
           
           case SETT_DONE:
+            printf(" Enter SETT_DONE\n");
             done_setting(SETT_DONE);
             break;
           
