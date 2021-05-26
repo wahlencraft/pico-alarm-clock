@@ -80,6 +80,12 @@ inline void decrement_time_setting(Times clockState, datetime_t *time) {
   in_or_decrement_time_setting(clockState, time, false);
 }
 
+void zero_seconds(Times clockState, datetime_t *time) {
+  time->sec = 0;
+  rtc_set_datetime(time);
+  show_time_as_setting(clockState, time, false);
+}
+
 /* SETTINGS */
 
 void brightness_setting(const int settingNum) {
@@ -160,12 +166,15 @@ void set_clock_setting(const int settingNum) {
             case MIDDLE_BUTTON:
               /* Action
                * - WEEKDAY, hour, minute: Decrement
-               * - SECONDS: Zero TODO
+               * - SECONDS: Zero
                * - DONE: Do nothing
                */
               switch (setClockState) {
                 case WEEKDAY ... MINUTE:
                   decrement_time_setting(setClockState, &time);
+                  break;
+                case SECOND:
+                  zero_seconds(setClockState, &time);
                   break;
                 default:
                   printf("Set clock state error: out of bounds\n");
@@ -174,7 +183,7 @@ void set_clock_setting(const int settingNum) {
             case RIGHT_BUTTON:
               /* Action
                * - WEEKDAY, hour, minute: Increment
-               * - SECONDS: Zero TODO
+               * - SECONDS: Zero
                * - DONE: Exit set clock mode
                */
               switch (setClockState) {
@@ -182,7 +191,7 @@ void set_clock_setting(const int settingNum) {
                   increment_time_setting(setClockState, &time);
                   break;
                 case SECOND:
-                  // TODO
+                  zero_seconds(setClockState, &time);
                   break;
                 case TIMES_DONE:
                   setClockMode = false;
