@@ -1,3 +1,12 @@
+/**
+ * main.c
+ *
+ * Some important functions and the upper level state-machine.
+ **/
+
+/*******************************************************************************
+ *  Includes
+ ******************************************************************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -9,7 +18,12 @@
 #include <PicoTM1637.h>
 #include <hardware/sync.h>
 
-/* GLOBALS */
+#include <helpers.h>
+#include <settings.h>
+
+/*******************************************************************************
+ * Globals
+ ******************************************************************************/
 // Global constants
 #define CLK_PIN 27
 #define DIO_PIN 26
@@ -23,12 +37,9 @@
 struct GlobBinder *state;  // Binder for all states in the global state machine 
 static char strBuff[63];
 
-// Include the helper files
-#include <helpers.h>
-#include <settings.h>
-
-
-/* FUNCTIONS */
+/*******************************************************************************
+ * Functions 
+ ******************************************************************************/
 
 void gpio_callback(uint gpio, uint32_t events) {
   printf("    { Interrupted by %d\n", gpio);
@@ -63,7 +74,11 @@ void show_next_min() {
   sleep_goto_sleep_until(&t, &display_h_min);
 }
 
-/* MAIN PROGRAM */
+/*******************************************************************************
+ *  Main program
+ *  - Initiate
+ *  - Start main loop (the state machine)
+ ******************************************************************************/
 int main() {
 
   struct GlobBinder globalStruct = {.sleepMode = true, .buttonBuffer = 0};
