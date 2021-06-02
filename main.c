@@ -59,19 +59,24 @@ void setup_button(int gpio) {
 }
 
 void show_next_min() {
+  // Print current time
   datetime_t t;
   rtc_get_datetime(&t);
   datetime_to_str(strBuff, 63, &t);
   printf("Current time: %s\n", strBuff);
-  increment_datetime(&t, 1);
-  t.sec = 0;
-  uart_default_tx_wait_blocking();
-  datetime_to_str(strBuff, 63, &t);
-  uart_default_tx_wait_blocking();
-  
+  // Set next wakeup
+  datetime_t time = {
+    .year = -1,
+    .month = -1,
+    .day = -1,
+    .dotw = -1,
+    .hour = -1,
+    .min = -1,
+    .sec = 0
+  };
+  uart_default_tx_wait_blocking(); 
   TM1637_wait();
-
-  sleep_goto_sleep_until(&t, &display_h_min);
+  sleep_goto_sleep_until(&time, &display_h_min);
 }
 
 /*******************************************************************************
