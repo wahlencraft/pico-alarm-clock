@@ -1,12 +1,23 @@
 #ifndef HELPERS_H_
 #define HELPERS_H_
 
+#define DATETIME_BEFORE 1
+#define DATETIME_SAME 2
+#define DATETIME_AFTER 3
+
 extern struct GlobBinder {
   bool sleepMode;
+  bool alarmMode;
   int buttonBuffer;
   int setting;
 } globBinder;
 
+/* Find if t1 is before (1), same as (2) or after (3) t2. 
+ *
+ * Does not care about year, month or day.
+ *
+ * Monday is the first day of the week and Sunday is last. */
+int compare_datetimes(datetime_t *t1, datetime_t *t2);
 
 void display_min_sec(void);
 

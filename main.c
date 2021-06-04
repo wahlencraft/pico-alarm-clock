@@ -20,6 +20,7 @@
 
 #include <helpers.h>
 #include <settings.h>
+#include <node.h>
 
 /*******************************************************************************
  * Globals
@@ -126,6 +127,8 @@ int main() {
   #define SETT_CLOCK 2
   #define SETT_ALARM 3
   #define SETT_DONE 4
+
+  node_test();
 
   printf("Start main loop\n");
   display_h_min();
