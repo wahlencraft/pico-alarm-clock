@@ -9,7 +9,6 @@
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
-#define EMPTY_LIST -1
 
 typedef struct Node {
   datetime_t *time;
@@ -17,6 +16,12 @@ typedef struct Node {
 } node_t;
 
 void print_list(node_t *head) {
+    if (head->next == head) {
+      // list is empty
+      printf("time: NULL, addr: 0x%x, next: 0x%x\n",
+          head, head->next);
+      return;
+    }
     node_t *current = head;
     while (current != NULL) {
       printf("time: D%d %02d:%02d:%02d, addr: 0x%x, next: 0x%x\n", 
@@ -26,19 +31,26 @@ void print_list(node_t *head) {
     }
 }
 
-node_t *node_create(datetime_t *time) {
+node_t *node_create(void) {
   node_t *head = NULL;
   head = (node_t *) malloc(sizeof(node_t));
   if (head == NULL) {
     return 1;
   }
-  head->time = time;
-  head->next = NULL;
+  head->time = NULL;
+  head->next = head;
   return head;
 }
 
 int node_add(node_t *head, datetime_t *time) {
   printf("Adding to list: ");
+  if (node_is_empty(head)) {
+    // Singular case. This is an empty list
+    printf("First item in list\n");
+    head->time = time;
+    head->next = NULL;
+    return 0;
+    }
   node_t *current = head;
   while (true) {
     if (compare_datetimes(current->time, time) == DATETIME_AFTER) {
@@ -71,9 +83,9 @@ int node_remove(node_t *head, datetime_t *time) {
     // Special case, removing head.
     printf("Removing head\n");
     if (head->next == NULL) {
-      // List will become empty, this must be passed on to the caller.
-      free(head);
-      return EMPTY_LIST;
+      // List will become empty
+      head->next = head;
+      return EXIT_SUCCESS;
     } else {
       // Change the content of head to be that of it's child, then remove child.
       node_t *child = head->next;
@@ -116,6 +128,10 @@ int node_remove(node_t *head, datetime_t *time) {
   }
 }
 
+int node_is_empty(node_t *head) {
+  return (head->next == head);
+}
+
 int node_test(void) {
   printf("Node test\n");
   datetime_t t1 = {
@@ -145,12 +161,15 @@ int node_test(void) {
     .min = 20,
     .sec = 0
   };
-  node_t *head = node_create(&t1);
+  node_t *head = node_create();
   print_list(head);
   node_add(head, &t2);
   node_add(head, &t3);
   print_list(head);
-  node_remove(head, &t1);
+  node_remove(head, &t2);
+  node_remove(head, &t3);
+  print_list(head);
+  node_add(head, &t1);
   print_list(head);
 
   int status = compare_datetimes(&t1, &t2);

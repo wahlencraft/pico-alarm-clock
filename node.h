@@ -19,6 +19,9 @@ node_t *node_create(datetime_t *time);
  * cronologically. */
 int node_add(node_t *head, datetime_t *time);
 
+/* Return 1 if this array has no data. */
+int node_is_empty(node_t *head);
+
 /* Remove a datetime item based of value. */
 int node_remove(node_t *head, datetime_t *time);
 
