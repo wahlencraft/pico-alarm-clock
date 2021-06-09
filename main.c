@@ -36,18 +36,36 @@
 #define BUZZER_DELAY 500
 
 // Global declarations
-struct GlobBinder *state;  // Binder for all states in the global state machine 
-static char strBuff[63];
-
+volatile struct GlobBinder *state;  // Binder for all states in the global state machine 
 /*******************************************************************************
  * Functions 
  ******************************************************************************/
+
+void rtc_alarm_callback(void) {
+  printf("RTC ALARM -> alarm()\n");
+  state->sleepMode = false;
+  state->alarmMode = true;
+}
 
 void gpio_callback(uint gpio, uint32_t events) {
   printf("    { Interrupted by %d\n", gpio);
   state->sleepMode = false;
   state->buttonBuffer = gpio;
   printf("      buttonBuffer = %d }\n", state->buttonBuffer);
+}
+
+int64_t alarm_callback(alarm_id_t id, void *user_data) {
+    static int counter = 100;
+    printf("Timer %d fired! ", (int) id);
+    int64_t nextCallback = update_running_alarm();
+    printf("Again in %lld ms\n", nextCallback);
+    // Can return a value here in us to fire in the future
+    if (counter--) {
+      return nextCallback*1000;
+    } else {
+      state->alarmMode = false;
+      return 0;
+    }
 }
 
 void setup_button(int gpio) {
@@ -61,6 +79,7 @@ void setup_button(int gpio) {
 }
 
 void show_next_min() {
+  char strBuff[63];
   // Print current time
   datetime_t t;
   rtc_get_datetime(&t);
@@ -129,13 +148,20 @@ int main() {
   #define SETT_ALARM 3
   #define SETT_DONE 4
   
-  sound_test();
+  init_alarms();
+
+  printf("Start alarm...\n");
+  printf("Wait for alarm...\n");
 
   printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
   state->alarmMode = false;
   state->buttonBuffer = 0;
+
+  // for testing purposes
+  state->sleepMode = false;
+  state->alarmMode = true;
 
   // Main loop
   while (true) {
@@ -144,7 +170,11 @@ int main() {
     } else if (state->alarmMode) {
       rtc_disable_alarm();
       printf("Alarm!!!\n");
-      update_alarm();
+      start_alarm(1);
+      add_alarm_in_ms(1, alarm_callback, NULL, false);
+      while (state->alarmMode) {}
+      stop_alarm();
+      state->sleepMode = true;
     } else {
       // Interrupted from sleepmode
       rtc_disable_alarm();

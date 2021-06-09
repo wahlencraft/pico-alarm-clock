@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <pico/stdlib.h>
 #include <hardware/clocks.h>
@@ -9,8 +10,7 @@
 #include <PicoTM1637.h>
 #include <node.h>
 
-#define PIN 18
-#define TONE_END -1
+#define BUZ_PIN 18
 #define SONGS 3
 
 enum Tones {
@@ -29,7 +29,7 @@ node_t *alarms;
 typedef const struct Note {
   int freq;
   int playDuration;
-  const int waitDuration;
+  int waitDuration;
 } note_t;
 
 typedef struct Song {
@@ -37,20 +37,16 @@ typedef struct Song {
   int len;
 } song_t;
 
+typedef struct SongState {
+  int num;    // what song is it (from songList)
+  int index;  // what tone (index) should be played?
+  int phase;  // 0: play phase, 1: wait phase
+} song_state_t;
+
 static song_t *songList[SONGS];
+static volatile song_state_t songState;
 
 void sound_test(void) {
-  uint32_t sysFreq = clock_get_hz(clk_sys);
-  printf("System clock is at %d kHz\n", sysFreq/1000);
-
-  gpio_set_function(PIN, GPIO_FUNC_PWM);
-  gpio_set_function(PIN+1, GPIO_FUNC_PWM);
-
-  uint slice_num = pwm_gpio_to_slice_num(PIN);
-
-  pwm_set_wrap(slice_num, 15);
-  pwm_set_chan_level(slice_num, PWM_CHAN_A, 8);  
-
   datetime_t t1 = {
     .year = 1970,
     .month = 1,
@@ -78,14 +74,13 @@ void sound_test(void) {
     .min = 20,
     .sec = 0
   };
-  init_alarm();
+  init_alarms();
 
   printf("Size: %d\n", sizeof(song_t));
   song_t *song1;
   song1 = songList[0];
   printf("Addr 0x%x, len %d\n", songList[0], song1->len);
   printf("Addr 0x%x, len %d\n", songList[1], songList[1]->len);
-  //play(songList[0]);
   node_add(alarms, &t1);
   node_print_all(alarms);
     
@@ -101,9 +96,17 @@ void sound_test(void) {
   }
 }
 
-void init_alarm() {
-  alarms = node_create();
+void init_alarms() {
+  // PWM
+  gpio_set_function(BUZ_PIN, GPIO_FUNC_PWM);
+  uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
+  uint channel = pwm_gpio_to_channel(BUZ_PIN);
+  pwm_set_wrap(slice_num, 31);
+  pwm_set_chan_level(slice_num, channel, 15);
 
+  alarms = node_create(); // to store alarms
+  
+  // Create songs
   static const note_t A = {.freq=TONE_A, .playDuration=300, .waitDuration=300};
   static const note_t B = {.freq=TONE_B, .playDuration=300, .waitDuration=300};
   static const note_t C = {.freq=TONE_C, .playDuration=300, .waitDuration=200};
@@ -150,6 +153,47 @@ void init_alarm() {
   }
 }
 
-void update_alarm(void) {
+void start_alarm(int songNum) {
+  songState.num = songNum;
+  songState.index = 0;
+  songState.phase = 0;
+}
+
+void stop_alarm() {
+  printf("Stopping alarm.\n");
+  uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
+  pwm_set_enabled(slice_num, false);
+}
+
+int64_t update_running_alarm(void) {
+  // For every note this function is called twice.
+  // What is done depends on the contents of the global struct songState
+  //  songState.num: The song to play (from songList). Is constant for an alarm.
+  //  songState.index: What note that is playing.
+  //  songState.phase: Phase for note (0 or 1).
+  //    0. Play sound, return playDuration.
+  //    1. Silent, return waitDuration.
+  //note_t **notes = songList[songState.num]->notes;
+  note_t *note = *(songList[songState.num]->notes + songState.index);
+  printf("songState: %d\n", songState.index);
+  int64_t retval;
+  uint32_t sysFreq = clock_get_hz(clk_sys);
+  uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
+  if (songState.phase == 0) {
+    pwm_set_clkdiv(slice_num, sysFreq/note->freq);
+    pwm_set_enabled(slice_num, true);
+    printf("Play %d Hz for %d ms\n", note->freq, note->playDuration);
+    songState.phase = 1;
+    retval = note->playDuration;
+  } else {
+    // phase 1
+    pwm_set_enabled(slice_num, false);
+    printf("Silent for %d ms\n", note->waitDuration);
+    songState.index = (songState.index == songList[songState.num]->len - 1) ? 
+      0 : songState.index + 1;
+    songState.phase = 0;
+    retval = note->waitDuration;
+  }
+  return retval;
 }
 
