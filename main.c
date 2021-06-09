@@ -21,6 +21,7 @@
 #include <helpers.h>
 #include <settings.h>
 #include <node.h>
+#include <alarm.h>
 
 /*******************************************************************************
  * Globals
@@ -127,18 +128,23 @@ int main() {
   #define SETT_CLOCK 2
   #define SETT_ALARM 3
   #define SETT_DONE 4
-
-  node_test();
+  
+  sound_test();
 
   printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
+  state->alarmMode = false;
   state->buttonBuffer = 0;
 
   // Main loop
   while (true) {
     if (state->sleepMode) {
       show_next_min();
+    } else if (state->alarmMode) {
+      rtc_disable_alarm();
+      printf("Alarm!!!\n");
+      update_alarm();
     } else {
       // Interrupted from sleepmode
       rtc_disable_alarm();

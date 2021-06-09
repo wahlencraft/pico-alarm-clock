@@ -15,7 +15,7 @@ typedef struct Node {
   struct Node *next;
 } node_t;
 
-void print_list(node_t *head) {
+void node_print_all(node_t *head) {
     if (head->next == head) {
       // list is empty
       printf("time: NULL, addr: 0x%x, next: 0x%x\n",
@@ -31,7 +31,7 @@ void print_list(node_t *head) {
     }
 }
 
-node_t *node_create(void) {
+node_t *node_create() {
   node_t *head = NULL;
   head = (node_t *) malloc(sizeof(node_t));
   if (head == NULL) {
@@ -162,15 +162,15 @@ int node_test(void) {
     .sec = 0
   };
   node_t *head = node_create();
-  print_list(head);
+  node_print_all(head);
   node_add(head, &t2);
   node_add(head, &t3);
-  print_list(head);
+  node_print_all(head);
   node_remove(head, &t2);
   node_remove(head, &t3);
-  print_list(head);
+  node_print_all(head);
   node_add(head, &t1);
-  print_list(head);
+  node_print_all(head);
 
   int status = compare_datetimes(&t1, &t2);
   printf("Compare datetimes returned: %d\n", status);
