@@ -1,16 +1,27 @@
-#ifndef NODE_H_
-#define NODE_H_
-
-/* Node
+/**
+ * node.h
  *
  * This is a ordered linked list containing datetime objects. Every node
  * is ordered from earliest to latest. Only one instance of the same date can
  * exist. Only dotw, hour, min, sec are considered and the week starts with 
- * Monday. */
+ * Monday. 
+ **/
+
+#ifndef NODE_H_
+#define NODE_H_
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <pico/stdlib.h>
+#include <hardware/clocks.h>
+#include <PicoTM1637.h>
+
+#include <helpers.h>
 
 typedef struct Node node_t;
 
-void node_test(void);
+int node_test(void);
 
 /* Create a new node. */
 node_t *node_create();

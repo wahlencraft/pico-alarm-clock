@@ -1,16 +1,5 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <inttypes.h>
+#include <alarm.h>
 
-#include <pico/stdlib.h>
-#include <hardware/clocks.h>
-#include <hardware/pwm.h>
-
-#include <PicoTM1637.h>
-#include <node.h>
-
-#define BUZ_PIN 18
 #define SONGS 3
 
 enum Tones {
@@ -160,7 +149,6 @@ void start_alarm(int songNum) {
 }
 
 void stop_alarm() {
-  printf("Stopping alarm.\n");
   uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
   pwm_set_enabled(slice_num, false);
 }

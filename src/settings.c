@@ -1,19 +1,12 @@
 #include <stdbool.h>
 #include <stdio.h>
-//#include <stdbool.h>
 #include <pico/stdlib.h>
-//#include <pico/util/datetime.h>
 #include <hardware/rtc.h>
 #include <hardware/sync.h>
 #include <PicoTM1637.h>
-#include <helpers.h>
 
-#define CLK_PIN 27
-#define DIO_PIN 26
-#define BUZ_PIN 15
-#define RIGHT_BUTTON 22
-#define MIDDLE_BUTTON 21
-#define LEFT_BUTTON 20
+#include <pins.h>
+#include <helpers.h>
 
 extern struct GlobBinder *state;
 

@@ -18,6 +18,7 @@
 #include <PicoTM1637.h>
 #include <hardware/sync.h>
 
+#include <pins.h>
 #include <helpers.h>
 #include <settings.h>
 #include <node.h>
@@ -26,17 +27,9 @@
 /*******************************************************************************
  * Globals
  ******************************************************************************/
-// Global constants
-#define CLK_PIN 27
-#define DIO_PIN 26
-#define BUZ_PIN 15
-#define RIGHT_BUTTON 22
-#define MIDDLE_BUTTON 21
-#define LEFT_BUTTON 20
-#define BUZZER_DELAY 500
 
-// Global declarations
 volatile struct GlobBinder *state;  // Binder for all states in the global state machine 
+
 /*******************************************************************************
  * Functions 
  ******************************************************************************/

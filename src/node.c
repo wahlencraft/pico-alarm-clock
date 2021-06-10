@@ -1,11 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <pico/stdlib.h>
-#include <hardware/clocks.h>
-
-#include <PicoTM1637.h>
-#include <helpers.h>
+#include <node.h>
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
