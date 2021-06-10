@@ -17,7 +17,9 @@ time based events.
 
 ## Setup
 ### Hardware
-For this project a couple of components is needed.
+
+<img style="float: right;" src="images/components.jpg"/>
+
 * Raspberry Pi Pico
 * TM1637 7-segment display
 * Passive buzzer
@@ -27,6 +29,7 @@ For this project a couple of components is needed.
   sizes are not important and might vary depending on the buttons and LED.
 * 3 Ceramic capacitors (100 nF) for button debouncing.
 * A micro USB power cable and 5V power supply.
+
 
 ### Circuit
 TODO
