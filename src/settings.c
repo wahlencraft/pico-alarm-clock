@@ -216,7 +216,7 @@ void set_alarm_setting(const int settingNum) {
          state->setting++;
          break;
        default:
-         printf("ERROR SETT_ALARM\n");
+         DEBUG_PRINT(("ERROR in set_alarm_setting, unknown state."));
      }
    }
 }

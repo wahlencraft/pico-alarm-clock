@@ -38,10 +38,10 @@ node_t *node_create() {
 }
 
 int node_add(node_t *head, datetime_t *time, int song) {
-  printf("Adding to list: ");
+  DEBUG_PRINT(("Adding to list: "));
   if (node_is_empty(head)) {
     // Singular case. This is an empty list
-    printf("First item in list\n");
+    DEBUG_PRINT(("First item in list\n"));
     head->time = time;
     head->song = song;
     head->next = NULL;
@@ -51,7 +51,7 @@ int node_add(node_t *head, datetime_t *time, int song) {
   while (true) {
     if (compare_datetimes(current->time, time) == DATETIME_AFTER) {
       // Insert in list
-      printf("inserting\n");
+      DEBUG_PRINT(("inserting\n"));
       
       node_t *next_node = NULL;
       next_node = (node_t *) malloc(sizeof(node_t));
@@ -65,7 +65,7 @@ int node_add(node_t *head, datetime_t *time, int song) {
       return 0;
     } else if (current->next == NULL) {
       // Append to end of list
-      printf("appending\n");
+      DEBUG_PRINT(("appending\n"));
       current->next = (node_t *) malloc(sizeof(node_t));
       current->next->time = time;
       current->next->song = song;
@@ -80,7 +80,7 @@ int node_add(node_t *head, datetime_t *time, int song) {
 int node_remove(node_t *head, datetime_t *time) {
   if (compare_datetimes(head->time, time) == DATETIME_SAME) {
     // Special case, removing head.
-    printf("Removing head\n");
+    DEBUG_PRINT(("Removing head\n"));
     if (head->next == NULL) {
       // List will become empty
       head->next = head;
@@ -102,27 +102,27 @@ int node_remove(node_t *head, datetime_t *time) {
     // delete it. The list is ordered, so if a later time is found, exit.
     switch (compare_datetimes(current->time, time)) {
       case DATETIME_BEFORE:
-        printf(" Wasn't [0x%x]\n", current);
+        DEBUG_PRINT((" Wasn't [0x%x]\n", current));
         if (current->next != NULL) {
           last = current;
           current = current->next;
           break;
         } else {
-          printf("Item not found. List ended early\n");
+          DEBUG_PRINT(("Item not found. List ended early\n"));
           return EXIT_FAILURE;
         }
       case DATETIME_SAME:
-        printf(" Found item [0x%x], deleting\n", current);
+        DEBUG_PRINT((" Found item [0x%x], deleting\n", current));
         last->next = current->next;
         free(current);
         return EXIT_SUCCESS;
         case DATETIME_AFTER:
         // Time is later than requested. The wanted node does not exist.
-        printf("Item not found!\n");
+        DEBUG_PRINT(("Item not found!\n"));
         return EXIT_FAILURE;
       default:
         // Should not happen
-        printf("Compare datetimes error. Unknown case.");
+        DEBUG_PRINT(("Compare datetimes error. Unknown case."));
         return EXIT_FAILURE;
     }
   }
@@ -133,7 +133,7 @@ int node_is_empty(node_t *head) {
 }
 
 int node_test(void) {
-  printf("Node test\n");
+  DEBUG_PRINT(("-NODE TEST-\n"));
   datetime_t t1 = {
     .year = 1970,
     .month = 1,

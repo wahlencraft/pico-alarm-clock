@@ -10,6 +10,12 @@
 #include <pico/util/datetime.h>
 #include <PicoTM1637.h>
 
+#ifdef NDEBUG
+# define DEBUG_PRINT(x) printf x
+#else
+# define DEBUG_PRINT(x) do {} while (0)
+#endif
+
 #define DATETIME_BEFORE 1
 #define DATETIME_SAME 2
 #define DATETIME_AFTER 3
