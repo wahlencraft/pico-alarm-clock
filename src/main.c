@@ -50,7 +50,7 @@ void gpio_callback(uint gpio, uint32_t events) {
 int64_t alarm_callback(alarm_id_t id, void *user_data) {
     static int counter = 100;
     printf("Timer %d fired! ", (int) id);
-    int64_t nextCallback = update_running_alarm();
+    int64_t nextCallback = update_running_song();
     printf("Again in %lld ms\n", nextCallback);
     // Can return a value here in us to fire in the future
     if (counter--) {
@@ -163,10 +163,10 @@ int main() {
     } else if (state->alarmMode) {
       rtc_disable_alarm();
       printf("Alarm!!!\n");
-      start_alarm(1);
+      start_song(1);
       add_alarm_in_ms(1, alarm_callback, NULL, false);
       while (state->alarmMode) {}
-      stop_alarm();
+      stop_song();
       state->sleepMode = true;
     } else {
       // Interrupted from sleepmode

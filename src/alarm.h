@@ -2,6 +2,9 @@
  * alarm.h
  * 
  * Start, maintain and stop the alarm.
+ *
+ * - Alarm: A time based event stored as a node.
+ * - Song: The sound associated with the alarm.
 **/
 
 #ifndef ALARM_H_
@@ -24,16 +27,16 @@ void sound_test();
 
 void init_alarms();
 
-/* Start a new alarm with song 'songNum'. */
-void start_alarm(int songNum);
+/* Start a new song with song 'songNum'. */
+void start_song(int songNum);
 
-/* Turn of the running alarm. */
-void stop_alarm();
+/* Turn of the running song. */
+void stop_song();
 
-/* Update state in the running alarm. 
+/* Update state in the running song. 
  *
  * Returns the time in ms for when it shuld be run again. Warning, if not run
  * at thease intervals, sound might glich out. */
-int64_t update_running_alarm();
+int64_t update_running_song();
 
 #endif //ALARM_H_

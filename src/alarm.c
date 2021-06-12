@@ -142,21 +142,21 @@ void init_alarms() {
   }
 }
 
-void start_alarm(int songNum) {
+void start_song(int songNum) {
   songState.num = songNum;
   songState.index = 0;
   songState.phase = 0;
 }
 
-void stop_alarm() {
+void stop_song() {
   uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
   pwm_set_enabled(slice_num, false);
 }
 
-int64_t update_running_alarm(void) {
+int64_t update_running_song(void) {
   // For every note this function is called twice.
   // What is done depends on the contents of the global struct songState
-  //  songState.num: The song to play (from songList). Is constant for an alarm.
+  //  songState.num: The song to play (from songList). Is constant for a song.
   //  songState.index: What note that is playing.
   //  songState.phase: Phase for note (0 or 1).
   //    0. Play sound, return playDuration.
