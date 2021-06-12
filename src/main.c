@@ -114,6 +114,7 @@ int main() {
 
   TM1637_clear();
   printf("\n--NEW TEST--\n");
+  printf("TEST\n");
   
   // Start the RTC
   rtc_init();
@@ -141,7 +142,8 @@ int main() {
   #define SETT_ALARM 3
   #define SETT_DONE 4
   
-  init_alarms();
+  node_test();
+  return 0;
 
   printf("Start alarm...\n");
   printf("Wait for alarm...\n");

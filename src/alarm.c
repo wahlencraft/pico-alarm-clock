@@ -70,7 +70,7 @@ void sound_test(void) {
   song1 = songList[0];
   printf("Addr 0x%x, len %d\n", songList[0], song1->len);
   printf("Addr 0x%x, len %d\n", songList[1], songList[1]->len);
-  node_add(alarms, &t1);
+  node_add(alarms, &t1, -1);
   node_print_all(alarms);
     
   printf("songList contents:\n");

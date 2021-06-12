@@ -5,21 +5,22 @@
 
 typedef struct Node {
   datetime_t *time;
+  int song;
   struct Node *next;
 } node_t;
 
 void node_print_all(node_t *head) {
     if (head->next == head) {
       // list is empty
-      printf("time: NULL, addr: 0x%x, next: 0x%x\n",
+      printf("time: NULL song: NULL, addr: 0x%x, next: 0x%x\n",
           head, head->next);
       return;
     }
     node_t *current = head;
     while (current != NULL) {
-      printf("time: D%d %02d:%02d:%02d, addr: 0x%x, next: 0x%x\n", 
+      printf("time: D%d %02d:%02d:%02d song: %d, addr: 0x%x, next: 0x%x\n", 
           current->time->dotw, current->time->hour, current->time->min, 
-          current->time->sec, current, current->next);
+          current->time->sec, current->song, current, current->next);
       current = current->next;
     }
 }
@@ -31,16 +32,18 @@ node_t *node_create() {
     return 1;
   }
   head->time = NULL;
+  head->song = -1;  // nonsense value
   head->next = head;
   return head;
 }
 
-int node_add(node_t *head, datetime_t *time) {
+int node_add(node_t *head, datetime_t *time, int song) {
   printf("Adding to list: ");
   if (node_is_empty(head)) {
     // Singular case. This is an empty list
     printf("First item in list\n");
     head->time = time;
+    head->song = song;
     head->next = NULL;
     return 0;
     }
@@ -53,9 +56,11 @@ int node_add(node_t *head, datetime_t *time) {
       node_t *next_node = NULL;
       next_node = (node_t *) malloc(sizeof(node_t));
       next_node->time = current->time;
+      next_node->song = current->song;
       next_node->next = current->next;
 
       current->time = time;
+      current->song = song;
       current->next = next_node;
       return 0;
     } else if (current->next == NULL) {
@@ -63,6 +68,7 @@ int node_add(node_t *head, datetime_t *time) {
       printf("appending\n");
       current->next = (node_t *) malloc(sizeof(node_t));
       current->next->time = time;
+      current->next->song = song;
       current->next->next = NULL;
       return 0;
     } else {
@@ -83,6 +89,7 @@ int node_remove(node_t *head, datetime_t *time) {
       // Change the content of head to be that of it's child, then remove child.
       node_t *child = head->next;
       head->time = child->time;
+      head->song = child->song;
       head->next = child->next;
       free(child);
       return EXIT_SUCCESS;
@@ -156,13 +163,13 @@ int node_test(void) {
   };
   node_t *head = node_create();
   node_print_all(head);
-  node_add(head, &t2);
-  node_add(head, &t3);
+  node_add(head, &t2, 0);
+  node_add(head, &t3, 1);
   node_print_all(head);
   node_remove(head, &t2);
   node_remove(head, &t3);
   node_print_all(head);
-  node_add(head, &t1);
+  node_add(head, &t1, 0);
   node_print_all(head);
 
   int status = compare_datetimes(&t1, &t2);
