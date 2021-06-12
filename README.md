@@ -40,6 +40,6 @@ behavior arises.
 
 The openocd reset command does not work with this code. I don't know why but a
 workaround is to remove that from the command. Load code with: 
-`openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program alarm-clock.elf verify exit"`
+`openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program src/alarm-clock.elf verify exit"`
 Then restart the Pico manually by using a reset switch or un- and re-plugging the
 power.
