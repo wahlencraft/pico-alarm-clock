@@ -1,8 +1,5 @@
 #include <node.h>
 
-#define EXIT_SUCCESS 0
-#define EXIT_FAILURE 1
-
 typedef struct Node {
   datetime_t *time;
   int song;
@@ -63,6 +60,11 @@ int node_add(node_t *head, datetime_t *time, int song) {
       current->song = song;
       current->next = next_node;
       return 0;
+    } else if (compare_datetimes(current->time, time) == DATETIME_SAME) {
+      // This date is already in the list. There can only be one alarm
+      // per datetime, so this should not happen. Pass error to caller.
+      DEBUG_PRINT(("WARNING! Can't add alarm, datetime already exists.\n"));
+      return 1;
     } else if (current->next == NULL) {
       // Append to end of list
       DEBUG_PRINT(("appending\n"));
@@ -163,13 +165,20 @@ int node_test(void) {
   };
   node_t *head = node_create();
   node_print_all(head);
-  node_add(head, &t2, 0);
-  node_add(head, &t3, 1);
+  if (node_add(head, &t2, 0)) {
+    printf("Failed to add t2\n");
+  }
+  if (node_add(head, &t3, 1)) {
+    printf("Failed to add t3\n");
+  }
+  if (node_add(head, &t3, 4)) {
+    printf("Failed to add t3\n");
+  }
   node_print_all(head);
   node_remove(head, &t2);
   node_remove(head, &t3);
   node_print_all(head);
-  node_add(head, &t1, 0);
+  node_add(head, &t1, -1);
   node_print_all(head);
 
   int status = compare_datetimes(&t1, &t2);
