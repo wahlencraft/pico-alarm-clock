@@ -1,20 +1,8 @@
 #include <alarm.h>
 
-#define SONGS 3
-
-enum Tones {
-  TONE_CM = 262,
-  TONE_D = 294,
-  TONE_E = 330,
-  TONE_F = 349,
-  TONE_G = 392,
-  TONE_A = 440,
-  TONE_B = 498,
-  TONE_C = 523
-};
-
-node_t *alarms;
-
+/*******************************************************************************
+ *  Typedefs
+ ******************************************************************************/
 typedef const struct Note {
   int freq;
   int playDuration;
@@ -32,9 +20,29 @@ typedef struct SongState {
   int phase;  // 0: play phase, 1: wait phase
 } song_state_t;
 
+/*******************************************************************************
+ * Globals
+ ******************************************************************************/
+#define SONGS 3
+
+enum Tones {
+  TONE_CM = 262,
+  TONE_D = 294,
+  TONE_E = 330,
+  TONE_F = 349,
+  TONE_G = 392,
+  TONE_A = 440,
+  TONE_B = 498,
+  TONE_C = 523
+};
+
+node_t *alarms;
 static song_t *songList[SONGS];
 static volatile song_state_t songState;
 
+/*******************************************************************************
+ * Tests and initialization
+ ******************************************************************************/
 void sound_test(void) {
   datetime_t t1 = {
     .year = 1970,
@@ -142,6 +150,9 @@ void init_alarms() {
   }
 }
 
+/*******************************************************************************
+ * Song functions
+ ******************************************************************************/
 void start_song(int songNum) {
   songState.num = songNum;
   songState.index = 0;
@@ -184,4 +195,3 @@ int64_t update_running_song(void) {
   }
   return retval;
 }
-
