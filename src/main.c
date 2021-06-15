@@ -139,22 +139,12 @@ int main() {
   #define SETT_CLOCK 2
   #define SETT_ALARM 3
   #define SETT_DONE 4
-  
-  node_test();
-  return 0;
-
-  printf("Start alarm...\n");
-  printf("Wait for alarm...\n");
 
   printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
   state->alarmMode = false;
   state->buttonBuffer = 0;
-
-  // for testing purposes
-  state->sleepMode = false;
-  state->alarmMode = true;
 
   // Main loop
   while (true) {
