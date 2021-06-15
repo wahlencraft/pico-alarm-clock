@@ -39,4 +39,21 @@ void stop_song();
  * at thease intervals, sound might glich out. */
 int64_t update_running_song();
 
+/* Add a new alarm.
+ *
+ * - @param *time: The datetime for when the alarm should fire. Only dotw,
+ *   hour, min and sec are important.
+ * - @param song: The song that should be played when the alarm fires. The
+ *   argument is an index in the songList array defined in `init_alarms`. */
+void add_alarm(datetime_t *time, int song);
+
+/* Check if there is an alarm before specified time. Get that alarm.
+ *
+ * Returns true if *current time* < *next alarm* <= @param time.
+ * If true @parmam returnNode will point to said alarm.*/
+bool is_alarm_before(datetime_t *time, node_t *returnNode);
+
+/* Remove the alarm at @param time. */
+void remove_alarm(datetime_t *time);
+
 #endif //ALARM_H_

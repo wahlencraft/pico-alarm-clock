@@ -19,7 +19,13 @@
 
 #include <helpers.h>
 
-typedef struct Node node_t;
+typedef struct Node {
+  datetime_t *time;
+  int song;
+  struct Node *next;
+} node_t;
+
+//extern node_t node_t;
 
 int node_test(void);
 
@@ -30,12 +36,25 @@ node_t *node_create();
  * cronologically. */
 int node_add(node_t *head, datetime_t *time, int song);
 
+/* Find the first node with a time after `time`.
+ *
+ * Returns 1 if list ends early.
+ * - @param time is the time from which the next node should be found.
+ * - @param head is the head of the list to look in.
+ * - @param nextNode is a pointer in which the found node will be put. Will be
+ *   NONE if list ends early.*/
+int node_find_next(datetime_t *time, node_t *head, node_t *nextNode);
+
 /* Return 1 if this array has no data. */
 int node_is_empty(node_t *head);
 
 void node_print_all(node_t *head);
 
-/* Remove a datetime item based of value. */
+void node_print(node_t *node);
+
+/* Remove a datetime item based of value. 
+ *
+ * Fails if item not found.*/
 int node_remove(node_t *head, datetime_t *time);
 
 #endif //SOUND_H_

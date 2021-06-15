@@ -1,11 +1,5 @@
 #include <node.h>
 
-typedef struct Node {
-  datetime_t *time;
-  int song;
-  struct Node *next;
-} node_t;
-
 void node_print_all(node_t *head) {
     if (head->next == head) {
       // list is empty
@@ -15,11 +9,22 @@ void node_print_all(node_t *head) {
     }
     node_t *current = head;
     while (current != NULL) {
-      printf("time: D%d %02d:%02d:%02d song: %d, addr: 0x%x, next: 0x%x\n", 
-          current->time->dotw, current->time->hour, current->time->min, 
-          current->time->sec, current->song, current, current->next);
+      node_print(current);
       current = current->next;
     }
+}
+
+void node_print(node_t *node) {
+  if (node->next == node) {
+    // list is empty
+    printf("time: NULL song: NULL, addr: 0x%x, next: 0x%x\n",
+        node, node->next);
+    return;
+  }
+  printf("time: D%d %02d:%02d:%02d song: %d, addr: 0x%x, next: 0x%x\n", 
+      node->time->dotw, node->time->hour, node->time->min, 
+      node->time->sec, node->song, node, node->next
+      );
 }
 
 node_t *node_create() {
@@ -77,6 +82,37 @@ int node_add(node_t *head, datetime_t *time, int song) {
       current = current->next;
     }
   }
+}
+
+int node_find_next(datetime_t *time, node_t *head, node_t *foundNode) {
+  printf("node_find_next (from D%d %d:%d)\n", time->dotw, time->hour, time->min);
+  node_t *current = head;
+  while (current != NULL) {
+    printf(" Current: ");
+    node_print(current);
+    int dateStatus = compare_datetimes(current->time, time);
+    printf(" dateStatus = %d\n", dateStatus);
+    switch (dateStatus) {
+      case DATETIME_BEFORE:
+      case DATETIME_SAME:
+        current = current->next;
+        printf(" next\n");
+        break;
+      case DATETIME_AFTER:
+        *foundNode = *current;
+        printf(" Exit: D%d %d:%d S%d\n", 
+            foundNode->time->dotw, foundNode->time->hour, foundNode->time->min,
+            foundNode->song);
+        return EXIT_SUCCESS;
+      default:
+        DEBUG_PRINT(("ERROR in node_find_next, impossible state."));
+        return EXIT_FAILURE;  
+      }
+  }
+  // We run out of nodes. There is no node after the specified time.
+  printf(" Run out of nodes.\n");
+  foundNode = NULL;
+  return EXIT_FAILURE;
 }
 
 int node_remove(node_t *head, datetime_t *time) {
@@ -171,15 +207,27 @@ int node_test(void) {
   if (node_add(head, &t3, 1)) {
     printf("Failed to add t3\n");
   }
-  if (node_add(head, &t3, 4)) {
+  if (node_add(head, &t1, 4)) {
     printf("Failed to add t3\n");
   }
   node_print_all(head);
-  node_remove(head, &t2);
-  node_remove(head, &t3);
-  node_print_all(head);
-  node_add(head, &t1, -1);
-  node_print_all(head);
+  datetime_t tf = {
+    .year = -1,
+    .month = -1,
+    .day = -1,
+    .dotw = 1, // 0 is Sunday
+    .hour = 17,
+    .min = 2,
+    .sec = 0
+  };
+  node_t *found = malloc(sizeof(found));
+  if (!node_find_next(&tf, head, found)) {
+    printf("Found D%d %d:%d:%d, song: %d\n", 
+      found->time->dotw, found->time->hour, found->time->min, found->time->sec,
+      found->song);
+  } else {
+    printf("Found NULL\n");
+  }
 
   int status = compare_datetimes(&t1, &t2);
   printf("Compare datetimes returned: %d\n", status);

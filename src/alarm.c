@@ -73,24 +73,31 @@ void sound_test(void) {
   };
   init_alarms();
 
-  printf("Size: %d\n", sizeof(song_t));
-  song_t *song1;
-  song1 = songList[0];
-  printf("Addr 0x%x, len %d\n", songList[0], song1->len);
-  printf("Addr 0x%x, len %d\n", songList[1], songList[1]->len);
-  node_add(alarms, &t1, -1);
   node_print_all(alarms);
-    
-  printf("songList contents:\n");
-  for (int i=0; i<SONGS; i++) {
-    note_t **notes = songList[i]->notes;
-    printf("  songList[%d]: 0x%x\n", i, songList[i]);
-    for (int j=0; j<songList[i]->len; j++) { 
-      note_t *note = *(notes+j);
-      printf("    0x%x: 0x%x->(%d Hz, %d ms, %d ms)\n", notes+j, 
-          note, note->freq, note->playDuration, note->waitDuration);
-    }
+  add_alarm(&t1, 0);
+  add_alarm(&t2, 0);
+  add_alarm(&t3, 1);
+  node_print_all(alarms);
+  datetime_t ts = {
+      .year = -1,
+      .month = -1,
+      .day = -1,
+      .dotw = 1, // 0 is Sunday
+      .hour = 17,
+      .min = 20,
+      .sec = 0
+    };
+  node_t *nextAlarm = malloc(sizeof(nextAlarm));
+  if (is_alarm_before(&ts, nextAlarm)) {
+    printf("True\n");
+    printf("Found node ");
+    node_print(nextAlarm);
+  } else {
+    printf("False\n");
   }
+  free(nextAlarm);
+  remove_alarm(&t1);
+  node_print_all(alarms);
 }
 
 void init_alarms() {
@@ -194,4 +201,43 @@ int64_t update_running_song(void) {
     retval = note->waitDuration;
   }
   return retval;
+}
+
+/*******************************************************************************
+ * Alarm functions
+ ******************************************************************************/
+void add_alarm(datetime_t *time, int song) {
+  if (node_add(alarms, time, song)) {
+    // Failed to add. Datetime occupied.
+    // TODO
+    printf("Failed to add new alarm. There is already an alarm at this time.\n");
+  }
+}
+
+bool is_alarm_before(datetime_t *time, node_t *nextNode) {
+  datetime_t t_now;
+  rtc_get_datetime(&t_now);
+  printf("node_find_next (from D%d %d:%d)\n", t_now.dotw, t_now.hour, t_now.min);
+  if (node_find_next(&t_now, alarms, nextNode)) {
+    // There is no next node
+    DEBUG_PRINT(("There is no next alarm.\n"));
+    return false;
+  }
+  switch (compare_datetimes(nextNode->time, time)) {
+    case DATETIME_BEFORE:
+    case DATETIME_SAME:
+      nextNode = nextNode;
+      return true;
+    case DATETIME_AFTER:
+      DEBUG_PRINT(("Next alarm is after specified time.\n"));
+      nextNode = NULL;
+      return false;
+  }
+}
+
+void remove_alarm(datetime_t *time) {
+  if (node_remove(alarms, time)) {
+    // Failed to remove alarm. Alarm did not exist. TODO.
+    DEBUG_PRINT(("Tried to remove alarm, but alarm did not exist."));
+  }
 }
