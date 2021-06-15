@@ -31,7 +31,9 @@ node_t *node_create() {
   node_t *head = NULL;
   head = (node_t *) malloc(sizeof(node_t));
   if (head == NULL) {
-    return 1;
+    printf("ERROR at line %d in function %s in file %s\nCould not create node.\n",
+        __LINE__, __func__, __FILE__);
+    return NULL;
   }
   head->time = NULL;
   head->song = -1;  // nonsense value
