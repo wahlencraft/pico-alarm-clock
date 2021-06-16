@@ -49,9 +49,9 @@ void sound_test(void) {
     .month = 1,
     .day = 1,
     .dotw = 1, // 0 is Sunday
-    .hour = 17,
-    .min = 35,
-    .sec = 2
+    .hour = 0,
+    .min = 1,
+    .sec = -1
   };
   datetime_t t2 = {
     .year = -1,
@@ -78,17 +78,8 @@ void sound_test(void) {
   add_alarm(&t2, 0);
   add_alarm(&t3, 1);
   node_print_all(alarms);
-  datetime_t ts = {
-      .year = -1,
-      .month = -1,
-      .day = -1,
-      .dotw = 1, // 0 is Sunday
-      .hour = 17,
-      .min = 20,
-      .sec = 0
-    };
   node_t *nextAlarm = malloc(sizeof(nextAlarm));
-  if (is_alarm_before(&ts, nextAlarm)) {
+  if (is_alarm_in_1_min(nextAlarm)) {
     printf("True\n");
     printf("Found node ");
     node_print(nextAlarm);
@@ -214,7 +205,7 @@ void add_alarm(datetime_t *time, int song) {
   }
 }
 
-bool is_alarm_before(datetime_t *time, node_t *nextNode) {
+bool is_alarm_in_1_min(node_t *nextNode) {
   datetime_t t_now;
   rtc_get_datetime(&t_now);
   printf("node_find_next (from D%d %d:%d)\n", t_now.dotw, t_now.hour, t_now.min);
@@ -223,13 +214,19 @@ bool is_alarm_before(datetime_t *time, node_t *nextNode) {
     DEBUG_PRINT(("There is no next alarm.\n"));
     return false;
   }
-  switch (compare_datetimes(nextNode->time, time)) {
+  increment_datetime(&t_now, 1);
+  datetime_t *t_nextMin = &t_now;
+  t_nextMin->sec = 0;  // increment datetime did not touch seconds.
+  printf("Next min is D%d %d:%d:%d\n", 
+      t_nextMin->dotw, t_nextMin->hour,
+      t_nextMin->min, t_nextMin->sec);
+  switch (compare_datetimes(nextNode->time, t_nextMin)) {
     case DATETIME_BEFORE:
     case DATETIME_SAME:
       nextNode = nextNode;
       return true;
     case DATETIME_AFTER:
-      DEBUG_PRINT(("Next alarm is after specified time.\n"));
+      DEBUG_PRINT(("Next alarm is in more than 1 minute.\n"));
       nextNode = NULL;
       return false;
   }

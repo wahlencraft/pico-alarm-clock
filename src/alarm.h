@@ -47,11 +47,11 @@ int64_t update_running_song();
  *   argument is an index in the songList array defined in `init_alarms`. */
 void add_alarm(datetime_t *time, int song);
 
-/* Check if there is an alarm before specified time. Get that alarm.
+/* Check if there is an alarm before next minute. Get that alarm.
  *
- * Returns true if *current time* < *next alarm* <= @param time.
+ * Returns true if *current time* < *next alarm* <= *next minute*.
  * If true @parmam returnNode will point to said alarm.*/
-bool is_alarm_before(datetime_t *time, node_t *returnNode);
+bool is_alarm_in_1_min(node_t *returnNode);
 
 /* Remove the alarm at @param time. */
 void remove_alarm(datetime_t *time);
