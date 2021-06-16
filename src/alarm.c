@@ -209,7 +209,6 @@ void add_alarm(datetime_t *time, int song) {
 bool is_alarm_in_1_min(node_t *nextNode) {
   datetime_t t_now;
   rtc_get_datetime(&t_now);
-  printf("node_find_next (from D%d %d:%d)\n", t_now.dotw, t_now.hour, t_now.min);
   if (node_find_next(&t_now, alarms, nextNode)) {
     // There is no next node
     DEBUG_PRINT(("There is no next alarm.\n"));
@@ -218,9 +217,6 @@ bool is_alarm_in_1_min(node_t *nextNode) {
   increment_datetime(&t_now, 1);
   datetime_t *t_nextMin = &t_now;
   t_nextMin->sec = 0;  // increment datetime did not touch seconds.
-  printf("Next min is D%d %d:%d:%d\n", 
-      t_nextMin->dotw, t_nextMin->hour,
-      t_nextMin->min, t_nextMin->sec);
   switch (compare_datetimes(nextNode->time, t_nextMin)) {
     case DATETIME_BEFORE:
     case DATETIME_SAME:

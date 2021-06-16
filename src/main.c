@@ -36,30 +36,35 @@ volatile struct GlobBinder *state;  // Binder for all states in the global state
 
 void fire_alarm(void) {
   printf("RTC ALARM -> alarm()\n");
-  state->sleepMode = false;
   state->alarmMode = true;
 }
 
 void gpio_callback(uint gpio, uint32_t events) {
-  DEBUG_PRINT(("    { Interrupted by %d\n", gpio));
-  state->sleepMode = false;
-  state->buttonBuffer = gpio;
-  printf("      buttonBuffer = %d }\n", state->buttonBuffer);
+  DEBUG_PRINT(("Interrupted by %d\n", gpio));
+  DEBUG_PRINT(("  alarmMode: %d, sleepMode: %d, buttonBuffer: %d\n",
+      state->alarmMode, state->sleepMode, state->buttonBuffer));
+  if (state->alarmMode) {
+    DEBUG_PRINT(("    Turn of alarm!\n"));
+    state->alarmMode = false;
+  } else {
+    state->sleepMode = false;
+    state->buttonBuffer = gpio;
+  }
+  DEBUG_PRINT(("  alarmMode: %d, sleepMode: %d, buttonBuffer: %d\n",
+      state->alarmMode, state->sleepMode, state->buttonBuffer));
 }
 
 int64_t alarm_callback(alarm_id_t id, void *user_data) {
   display_h_min();
-  static int counter = 100;
+  if (state->alarmMode) {
     printf("Timer %d fired! ", (int) id);
     int64_t nextCallback = update_running_song();
     printf("Again in %lld ms\n", nextCallback);
     // Can return a value here in us to fire in the future
-    if (counter--) {
-      return nextCallback*1000;
-    } else {
-      state->alarmMode = false;
-      return 0;
-    }
+    return nextCallback*1000;
+  }
+  printf("No more alarm callbacks.\n");
+  return 0;
 }
 
 void setup_button(int gpio) {
@@ -157,10 +162,12 @@ int main() {
     .day = 1,
     .dotw = 1, // 0 is Sunday
     .hour = 0,
-    .min = 2,
+    .min = 1,
     .sec = 0
   };
   add_alarm(&alarm_t, 0);
+  alarm_t.min = 3;
+  add_alarm(&alarm_t, 1); // FIXME store copy of alarm.
 
   printf("Start main loop\n");
   display_h_min();
@@ -168,37 +175,39 @@ int main() {
   state->alarmMode = false;
   state->buttonBuffer = 0;
 
+  node_t *runningAlarm = malloc(sizeof(runningAlarm));
   // Main loop
   // 
-  // if sleepMode:
+  // if alarmMode:
+  //    play song (stay here until interupt)
+  // else if sleepMode:
   //    if "alarm in 1 min" -> sleep_to_next_alarm
   //    else -> sleep_to_next_min
-  // else if alarmMode:
-  //    play song (stay here until interupt)
   // else if "alarm now":  TODO
   //    fire_alarm
   // else: (button interupt)
   //    open settings menu
   while (true) {
-    if (state->sleepMode) {
-      node_t *alarm = malloc(sizeof(alarm));
-      if (is_alarm_in_1_min(alarm)) {
-        printf("Found alarm!\n");
-        sleep_to_next_alarm(alarm);
+    if (state->alarmMode) {
+      rtc_disable_alarm();
+      printf("Alarm!!!\n");
+      start_song(runningAlarm->song);
+      add_alarm_in_ms(1, alarm_callback, NULL, false);
+      while (state->alarmMode) {}
+      rtc_disable_alarm();
+      stop_song();
+    } else if (state->sleepMode) { 
+      if (is_alarm_in_1_min(runningAlarm)) {
+        printf("Found alarm! Fire at %02d:%02d:%02d.\n",
+            runningAlarm->time->hour, 
+            runningAlarm->time->min, 
+            runningAlarm->time->sec);
+        sleep_to_next_alarm(runningAlarm);
       } else {
         sleep_to_next_min();
       }
-      free(alarm);
-    } else if (state->alarmMode) {
-      rtc_disable_alarm();
-      printf("Alarm!!!\n");
-      start_song(1);
-      add_alarm_in_ms(1, alarm_callback, NULL, false);
-      while (state->alarmMode) {}
-      stop_song();
-      state->sleepMode = true;
     } else {
-      // Interrupted from sleepmode
+      // Interrupted from by button. Open settings menu.
       rtc_disable_alarm();
       DEBUG_PRINT(("Woke up by interupt!\n"));
       int button;

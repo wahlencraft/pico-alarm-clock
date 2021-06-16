@@ -87,24 +87,17 @@ int node_add(node_t *head, datetime_t *time, int song) {
 }
 
 int node_find_next(datetime_t *time, node_t *head, node_t *foundNode) {
-  printf("node_find_next (from D%d %d:%d)\n", time->dotw, time->hour, time->min);
   node_t *current = head;
   while (current != NULL) {
-    printf(" Current: ");
     node_print(current);
     int dateStatus = compare_datetimes(current->time, time);
-    printf(" dateStatus = %d\n", dateStatus);
     switch (dateStatus) {
       case DATETIME_BEFORE:
       case DATETIME_SAME:
         current = current->next;
-        printf(" next\n");
         break;
       case DATETIME_AFTER:
         *foundNode = *current;
-        printf(" Exit: D%d %d:%d S%d\n", 
-            foundNode->time->dotw, foundNode->time->hour, foundNode->time->min,
-            foundNode->song);
         return EXIT_SUCCESS;
       default:
         DEBUG_PRINT(("ERROR in node_find_next, impossible state."));
