@@ -92,6 +92,7 @@ void sound_test(void) {
 }
 
 void init_alarms() {
+  DEBUG_PRINT(("INIT ALARMS\n"));
   // PWM
   gpio_set_function(BUZ_PIN, GPIO_FUNC_PWM);
   uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);

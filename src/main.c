@@ -34,7 +34,7 @@ volatile struct GlobBinder *state;  // Binder for all states in the global state
  * Functions 
  ******************************************************************************/
 
-void rtc_alarm_callback(void) {
+void fire_alarm(void) {
   printf("RTC ALARM -> alarm()\n");
   state->sleepMode = false;
   state->alarmMode = true;
@@ -48,7 +48,8 @@ void gpio_callback(uint gpio, uint32_t events) {
 }
 
 int64_t alarm_callback(alarm_id_t id, void *user_data) {
-    static int counter = 100;
+  display_h_min();
+  static int counter = 100;
     printf("Timer %d fired! ", (int) id);
     int64_t nextCallback = update_running_song();
     printf("Again in %lld ms\n", nextCallback);
@@ -71,7 +72,8 @@ void setup_button(int gpio) {
       );
 }
 
-void show_next_min() {
+/* Put cpu to sleep until next minute. Then display time. */
+void sleep_to_next_min() {
   char strBuff[63];
   // Print current time
   datetime_t t;
@@ -93,6 +95,13 @@ void show_next_min() {
   sleep_goto_sleep_until(&time, &display_h_min);
 }
 
+/* Put cpu to sleep until next alarm. Then display time and start alarmMode. */
+void sleep_to_next_alarm(node_t *alarm) {
+  uart_default_tx_wait_blocking();
+  TM1637_wait();
+  sleep_goto_sleep_until(alarm->time, &fire_alarm);
+}
+
 /*******************************************************************************
  *  Main program
  *  - Initiate
@@ -111,7 +120,8 @@ int main() {
   setup_button(LEFT_BUTTON);
   setup_button(MIDDLE_BUTTON);
   setup_button(RIGHT_BUTTON);
-
+  init_alarms();
+  
   DEBUG_PRINT(("\n---START TEST---\n"));
   TM1637_clear();
   // Start the RTC
@@ -140,6 +150,18 @@ int main() {
   #define SETT_ALARM 3
   #define SETT_DONE 4
 
+  // Test alarm 
+  datetime_t alarm_t = {
+    .year = 1970,
+    .month = 1,
+    .day = 1,
+    .dotw = 1, // 0 is Sunday
+    .hour = 0,
+    .min = 2,
+    .sec = 0
+  };
+  add_alarm(&alarm_t, 0);
+
   printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
@@ -147,9 +169,26 @@ int main() {
   state->buttonBuffer = 0;
 
   // Main loop
+  // 
+  // if sleepMode:
+  //    if "alarm in 1 min" -> sleep_to_next_alarm
+  //    else -> sleep_to_next_min
+  // else if alarmMode:
+  //    play song (stay here until interupt)
+  // else if "alarm now":  TODO
+  //    fire_alarm
+  // else: (button interupt)
+  //    open settings menu
   while (true) {
     if (state->sleepMode) {
-      show_next_min();
+      node_t *alarm = malloc(sizeof(alarm));
+      if (is_alarm_in_1_min(alarm)) {
+        printf("Found alarm!\n");
+        sleep_to_next_alarm(alarm);
+      } else {
+        sleep_to_next_min();
+      }
+      free(alarm);
     } else if (state->alarmMode) {
       rtc_disable_alarm();
       printf("Alarm!!!\n");
