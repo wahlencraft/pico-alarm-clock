@@ -41,8 +41,10 @@ node_t *node_create() {
   return head;
 }
 
-int node_add(node_t *head, datetime_t *time, int song) {
+int node_add(node_t *head, datetime_t *time_p, int song) {
   DEBUG_PRINT(("Adding to list: "));
+  datetime_t *time = malloc(sizeof(time));
+  *time = *time_p;
   if (node_is_empty(head)) {
     // Singular case. This is an empty list
     DEBUG_PRINT(("First item in list\n"));

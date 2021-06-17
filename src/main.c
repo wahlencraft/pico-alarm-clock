@@ -167,7 +167,7 @@ int main() {
   };
   add_alarm(&alarm_t, 0);
   alarm_t.min = 3;
-  add_alarm(&alarm_t, 1); // FIXME store copy of alarm.
+  add_alarm(&alarm_t, 1);
 
   printf("Start main loop\n");
   display_h_min();
