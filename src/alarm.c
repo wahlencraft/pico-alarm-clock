@@ -180,13 +180,13 @@ int64_t update_running_song(void) {
   if (songState.phase == 0) {
     pwm_set_clkdiv(slice_num, sysFreq/note->freq);
     pwm_set_enabled(slice_num, true);
-    printf("Play %d Hz for %d ms\n", note->freq, note->playDuration);
+    printf("  Play %d Hz for %d ms\n", note->freq, note->playDuration);
     songState.phase = 1;
     retval = note->playDuration;
   } else {
     // phase 1
     pwm_set_enabled(slice_num, false);
-    printf("Silent for %d ms\n", note->waitDuration);
+    printf("  Silent for %d ms\n", note->waitDuration);
     songState.index = (songState.index == songList[songState.num]->len - 1) ? 
       0 : songState.index + 1;
     songState.phase = 0;

@@ -35,12 +35,14 @@ volatile struct GlobBinder *state;  // Binder for all states in the global state
  ******************************************************************************/
 
 void fire_alarm(void) {
-  printf("RTC ALARM -> alarm()\n");
+  printf("START NEW ALARM\n");
+  uint32_t hz = clock_get_hz(clk_sys);
+  printf("  Running at %f MHz\n", (float) hz/1000000);
   state->alarmMode = true;
 }
 
 void gpio_callback(uint gpio, uint32_t events) {
-  DEBUG_PRINT(("Interrupted by %d\n", gpio));
+  DEBUG_PRINT(("Interrupted by GPIO %d\n", gpio));
   DEBUG_PRINT(("  alarmMode: %d, sleepMode: %d, buttonBuffer: %d\n",
       state->alarmMode, state->sleepMode, state->buttonBuffer));
   if (state->alarmMode) {
@@ -55,16 +57,12 @@ void gpio_callback(uint gpio, uint32_t events) {
 }
 
 int64_t alarm_callback(alarm_id_t id, void *user_data) {
+  DEBUG_PRINT(("alarm_callback: Timer %d fired! ", (int) id));
   display_h_min();
-  if (state->alarmMode) {
-    printf("Timer %d fired! ", (int) id);
-    int64_t nextCallback = update_running_song();
-    printf("Again in %lld ms\n", nextCallback);
-    // Can return a value here in us to fire in the future
-    return nextCallback*1000;
-  }
-  printf("No more alarm callbacks.\n");
-  return 0;
+  int64_t nextCallback = update_running_song();
+  DEBUG_PRINT(("Again in %lld ms\n", nextCallback));
+  // Can return a value here in us to fire in the future
+  return nextCallback*1000;
 }
 
 void setup_button(int gpio) {
@@ -190,11 +188,11 @@ int main() {
   while (true) {
     if (state->alarmMode) {
       rtc_disable_alarm();
-      printf("Alarm!!!\n");
       start_song(runningAlarm->song);
-      add_alarm_in_ms(1, alarm_callback, NULL, false);
+      alarm_id_t almID = add_alarm_in_us(0, alarm_callback, NULL, true);
+      printf("Alarm %d started\n", almID);
       while (state->alarmMode) {}
-      rtc_disable_alarm();
+      cancel_alarm(almID);
       stop_song();
     } else if (state->sleepMode) { 
       if (is_alarm_in_1_min(runningAlarm)) {

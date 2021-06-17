@@ -1,27 +1,28 @@
 #include <node.h>
 
 void node_print_all(node_t *head) {
-    if (head->next == head) {
-      // list is empty
-      printf("time: NULL song: NULL, addr: 0x%x, next: 0x%x\n",
-          head, head->next);
-      return;
-    }
-    node_t *current = head;
-    while (current != NULL) {
-      node_print(current);
-      current = current->next;
-    }
+  printf("Printing nodes:\n");
+  if (head->next == head) {
+    // list is empty
+    printf("  time: NULL song: NULL, addr: 0x%x, next: 0x%x\n",
+        head, head->next);
+    return;
+  }
+  node_t *current = head;
+  while (current != NULL) {
+    node_print(current);
+    current = current->next;
+  }
 }
 
 void node_print(node_t *node) {
   if (node->next == node) {
     // list is empty
-    printf("time: NULL song: NULL, addr: 0x%x, next: 0x%x\n",
+    printf("  time: NULL song: NULL, addr: 0x%x, next: 0x%x\n",
         node, node->next);
     return;
   }
-  printf("time: D%d %02d:%02d:%02d song: %d, addr: 0x%x, next: 0x%x\n", 
+  printf("  time: D%d %02d:%02d:%02d song: %d, addr: 0x%x, next: 0x%x\n", 
       node->time->dotw, node->time->hour, node->time->min, 
       node->time->sec, node->song, node, node->next
       );
