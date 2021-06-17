@@ -10,11 +10,13 @@
 
 extern struct GlobBinder *state;
 
-/* INTERNAL HELPERS */
+/*******************************************************************************
+ *  Internal helper functions
+ ******************************************************************************/
 
 typedef enum {WEEKDAY, HOUR, MINUTE, SECOND, TIMES_DONE, TIMES_LEN} Times;
 
-int fetch_button_with_irq_off(void) {
+static int fetch_button_with_irq_off(void) {
   static uint32_t irqStatus;
   int button;
   irqStatus = save_and_disable_interrupts();
@@ -24,7 +26,11 @@ int fetch_button_with_irq_off(void) {
   return button;
 }
 
-void show_time_as_setting(Times clockState, datetime_t *time, bool newState) {
+static void show_time_as_setting(
+    Times clockState,
+    datetime_t *time,
+    bool newState
+  ){
   char *labels[] = {
     "da:", "Hr:", "mi:", "SE:", "done"
   };
@@ -49,7 +55,11 @@ void show_time_as_setting(Times clockState, datetime_t *time, bool newState) {
   }
 }
 
-void in_or_decrement_time_setting(Times clockState, datetime_t *time, bool increment) {
+static void in_or_decrement_time_setting(
+    Times clockState,
+    datetime_t *time,
+    bool increment
+  ){
   int maxForClockState[] = {7, 24, 60};
   int8_t *timeStart = &(time->dotw);
   int value = (int) timeStart[clockState];
@@ -65,11 +75,11 @@ void in_or_decrement_time_setting(Times clockState, datetime_t *time, bool incre
   show_time_as_setting(clockState, time, false);
 }
 
-inline void increment_time_setting(Times clockState, datetime_t *time) {
+static inline void increment_time_setting(Times clockState, datetime_t *time) {
   in_or_decrement_time_setting(clockState, time, true);
 }
 
-inline void decrement_time_setting(Times clockState, datetime_t *time) {
+static inline void decrement_time_setting(Times clockState, datetime_t *time) {
   in_or_decrement_time_setting(clockState, time, false);
 }
 
@@ -79,7 +89,11 @@ void zero_seconds(Times clockState, datetime_t *time) {
   show_time_as_setting(clockState, time, false);
 }
 
-/* SETTINGS */
+/*******************************************************************************
+ * The setting functions.
+ *
+ * These are called directly from the main loop based on pressed buttons.
+ ******************************************************************************/
 
 void brightness_setting(const int settingNum) {
   TM1637_display_word("br:", true);
@@ -114,7 +128,7 @@ void set_clock_setting(const int settingNum) {
   bool stay = true;
   while (stay) {
     button = fetch_button_with_irq_off();
-    switch (button) {  
+    switch (button) {
       case 0:
         break;
       case LEFT_BUTTON:
@@ -203,13 +217,13 @@ void set_clock_setting(const int settingNum) {
   }
 }
 
-void set_alarm_setting(const int settingNum) { 
+void set_alarm_setting(const int settingNum) {
   printf("Setting = %d\n", state->setting);
   TM1637_display_word("ALAr", true);
   int button;
   while (state->setting == settingNum) {
      button = fetch_button_with_irq_off();
-     switch (button) {  
+     switch (button) {
        case 0:
          break;
        case LEFT_BUTTON:
@@ -227,7 +241,7 @@ void done_setting(const int settingNum) {
   int button;
   while (state->setting == settingNum) {
     button = fetch_button_with_irq_off();
-    switch (button) {  
+    switch (button) {
       case 0:
         break;
       case LEFT_BUTTON:
