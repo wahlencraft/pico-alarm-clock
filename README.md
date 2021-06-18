@@ -43,3 +43,19 @@ workaround is to remove that from the command. Load code with:
 `openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program src/alarm-clock.elf verify exit"`
 Then restart the Pico manually by using a reset switch or un- and re-plugging the
 power.
+
+## Usage
+Under normal circumstances will the display show current time and wait for
+alarms to fire. When the clock is turned on the time will be `Monday 00:00:00`
+and there is no set alarms. To change the time or add an alarm, open the menu.
+### Menu
+If any button is pressed the menu will open. In the menu you can change the
+display brightness, set clock time and set alarms. See the flowchart below for
+the entire state machine.
+![image](images/MenuFlow.png)
+### Alarms
+New alarms can be set from the menu. In addition to having a time every alarm
+also has a song associated with it. That way you can have different sounds for
+different alarms.
+
+When an alarm fires, press any putton to stop it.
