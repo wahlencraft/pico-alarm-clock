@@ -14,7 +14,27 @@ extern struct GlobBinder *state;
  *  Internal helper functions
  ******************************************************************************/
 
-typedef enum {WEEKDAY, HOUR, MINUTE, SECOND, TIMES_DONE, TIMES_LEN} Times;
+typedef enum {
+  CLK_DOTW,
+  CLK_HOUR,
+  CLK_MIN,
+  CLK_SEC,
+  CLK_DONE,
+  CLK_LEN
+} clk_t;
+
+typedef enum {
+  ALM_DOTW,
+  ALM_HOUR,
+  ALM_MIN,
+  ALM_SONG,
+  ALM_CONF,
+  ALM_DONE,
+  ALM_LEN
+} alm_t;
+
+#define CLK 0
+#define ALM 1
 
 static int fetch_button_with_irq_off(void) {
   static uint32_t irqStatus;
@@ -26,67 +46,101 @@ static int fetch_button_with_irq_off(void) {
   return button;
 }
 
-static void show_time_as_setting(
-    Times clockState,
+static void show_setting(
+    int settingState,
+    int setting,
     datetime_t *time,
     bool newState
   ){
-  char *labels[] = {
-    "da:", "Hr:", "mi:", "SE:", "done"
+  char *labels[2][6] = {
+    "da:", "Hr:", "mi:", "SE:", "done",     "",
+    "da:", "Hr:", "mi:", "So:",  "Act", "done"
   };
+  //switch (setting) {
+  //  case CLK:
+  //    ;
+  //    char *l = {
+  //      "da:", "Hr:", "mi:", "SE:", "done"
+  //    };
+  //    labels = l;
+  //    break;
+  //  case ALM:
+  //    ;
+  //    char *l = {
+  //      "da:", "Hr", "mi:", "So:", "Act", "done"
+  //    };
+  //    labels = l;
+  //    break;
+  //}
   char *weekdays[] = {
     "da:Su", "da:mo", "da:tu", "da:wE", "da:tH", "da:Fr", "da:SA"
   };
   uint8_t *timeStart = &(time->dotw);
-  switch (clockState) {
-    case WEEKDAY:
+  switch (settingState) {
+    // NOTE: Both the CLK and ALM enumeratins starts at 0, so they overlap
+    case CLK_DOTW:
+      // For ALM this corresponds to ALM_DOTW
       TM1637_display_word(weekdays[time->dotw], true);
       break;
-    case HOUR ... SECOND:
+    case CLK_HOUR ... CLK_SEC:
+      // For ALM this corresponds to ALM_HOUR ... ALM_SONG
       if (newState) {
         // The left part of the display only needs to be updated if the
-        // clockState has changed since last call (by user input).
-        TM1637_display_word(labels[clockState], true);
+        // settingState has changed since last call (by user input).
+        TM1637_display_word(labels[setting][settingState], true);
       }
-      TM1637_display_right(timeStart[clockState], true);
+      TM1637_display_right(timeStart[settingState], true);
       break;
-    case TIMES_DONE:
-      TM1637_display_word(labels[clockState], true);
+    default:
+      // The last cases (clk done, alm song, alm activate, alm done) all works
+      // the same way.
+      assert((settingState >= CLK_DONE) && (settingState <= ALM_DONE));
+      TM1637_display_word(labels[setting][settingState], true);
   }
 }
 
 static void in_or_decrement_time_setting(
-    Times clockState,
+    int settingState,
+    int setting,
     datetime_t *time,
     bool increment
   ){
-  int maxForClockState[] = {7, 24, 60};
+  int maxForState[] = {7, 24, 60};
   int8_t *timeStart = &(time->dotw);
-  int value = (int) timeStart[clockState];
+  int value = (int) timeStart[settingState];
   printf("Increment %d", value);
   if (increment) {
-    increment_with_wrap(&value, maxForClockState[clockState]);
+    increment_with_wrap(&value, maxForState[settingState]);
   } else {
-    decrement_with_wrap(&value, maxForClockState[clockState]);
+    decrement_with_wrap(&value, maxForState[settingState]);
   }
   printf(" to %d\n", value);
-  timeStart[clockState] = (int8_t) value;
+  timeStart[settingState] = (int8_t) value;
   rtc_set_datetime(time);
-  show_time_as_setting(clockState, time, false);
+  show_setting(settingState, setting, time, false);
 }
 
-static inline void increment_time_setting(Times clockState, datetime_t *time) {
-  in_or_decrement_time_setting(clockState, time, true);
+static inline void increment_time_setting(
+    int settingState, 
+    int setting, 
+    datetime_t *time
+    ){
+  in_or_decrement_time_setting(settingState, setting, time, true);
 }
 
-static inline void decrement_time_setting(Times clockState, datetime_t *time) {
-  in_or_decrement_time_setting(clockState, time, false);
+static inline void decrement_time_setting(
+    int settingState, 
+    int setting,
+    datetime_t *time
+    ){
+  in_or_decrement_time_setting(settingState, setting, time, false);
 }
 
-void zero_seconds(Times clockState, datetime_t *time) {
+/* Set time->sec to 0 and show. Only needs to work for CLK */
+void zero_seconds(int settingState, datetime_t *time) {
   time->sec = 0;
   rtc_set_datetime(time);
-  show_time_as_setting(clockState, time, false);
+  show_setting(settingState, CLK, time, false);
 }
 
 /*******************************************************************************
@@ -141,7 +195,7 @@ int set_clock_setting(const int setting) {
         datetime_t time;
         bool setClockMode = true;
         // initilize "set clock mode"
-        Times setClockState = WEEKDAY;
+        clk_t setClockState = CLK_DOTW;
         int8_t oldSec = -1;
         printf("  setClockState: %d\n", setClockState);
         while (setClockMode) {
@@ -153,33 +207,33 @@ int set_clock_setting(const int setting) {
               // the display.
               if (oldSec != time.sec) {
                 oldSec = time.sec;
-                show_time_as_setting(setClockState, &time, false);
+                show_setting(setClockState, CLK, &time, false);
               }
               break;
             case LEFT_BUTTON:
               /* Go to next clock setting
                *
-               * WEEKDAY -> HOUR -> MINUTE -> SECONDS -> DONE
+               * CLK_DOTW -> CLK_HOUR -> CLK_MIN -> CLK_SECS -> DONE
                *    ^                                      |
                *    |______________________________________|
                */
-              setClockState = (setClockState + 1) % TIMES_LEN;
+              setClockState = (setClockState + 1) % CLK_LEN;
               // update display
               printf("  setClockState: %d\n", setClockState);
               rtc_get_datetime(&time);
-              show_time_as_setting(setClockState, &time, true);
+              show_setting(setClockState, CLK, &time, true);
               break;
             case MIDDLE_BUTTON:
               /* Action
-               * - WEEKDAY, hour, minute: Decrement
-               * - SECONDS: Zero
+               * - CLK_DOTW, hour, minute: Decrement
+               * - CLK_SECS: Zero
                * - DONE: Do nothing
                */
               switch (setClockState) {
-                case WEEKDAY ... MINUTE:
-                  decrement_time_setting(setClockState, &time);
+                case CLK_DOTW ... CLK_MIN:
+                  decrement_time_setting(setClockState, CLK, &time);
                   break;
-                case SECOND:
+                case CLK_SEC:
                   zero_seconds(setClockState, &time);
                   break;
                 default:
@@ -188,18 +242,18 @@ int set_clock_setting(const int setting) {
               break;
             case RIGHT_BUTTON:
               /* Action
-               * - WEEKDAY, hour, minute: Increment
-               * - SECONDS: Zero
+               * - CLK_DOTW, hour, minute: Increment
+               * - CLK_SECS: Zero
                * - DONE: Exit set clock mode
                */
               switch (setClockState) {
-                case WEEKDAY ... MINUTE:
-                  increment_time_setting(setClockState, &time);
+                case CLK_DOTW ... CLK_MIN:
+                  increment_time_setting(setClockState, CLK, &time);
                   break;
-                case SECOND:
+                case CLK_SEC:
                   zero_seconds(setClockState, &time);
                   break;
-                case TIMES_DONE:
+                case CLK_DONE:
                   // Exit, but come back to the same setting.
                   setClockMode = false;
                   return setting;
