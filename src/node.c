@@ -89,7 +89,7 @@ int node_add(node_t *head, datetime_t *time_p, int song) {
   }
 }
 
-int node_find_next(datetime_t *time, node_t *head, node_t *foundNode) {
+int node_get_next_from_time(datetime_t *time, node_t *head, node_t *foundNode) {
   node_t *current = head;
   while (current != NULL) {
     node_print(current);
@@ -103,7 +103,7 @@ int node_find_next(datetime_t *time, node_t *head, node_t *foundNode) {
         *foundNode = *current;
         return EXIT_SUCCESS;
       default:
-        DEBUG_PRINT(("ERROR in node_find_next, impossible state."));
+        DEBUG_PRINT(("ERROR in node_get_next_from_time, impossible state."));
         return EXIT_FAILURE;  
       }
   }
@@ -219,7 +219,7 @@ int node_test(void) {
     .sec = 0
   };
   node_t *found = malloc(sizeof(found));
-  if (!node_find_next(&tf, head, found)) {
+  if (!node_get_next_from_time(&tf, head, found)) {
     printf("Found D%d %d:%d:%d, song: %d\n", 
       found->time->dotw, found->time->hour, found->time->min, found->time->sec,
       found->song);

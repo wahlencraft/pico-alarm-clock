@@ -206,10 +206,37 @@ void add_alarm(datetime_t *time, int song) {
   }
 }
 
+int get_next_alarm(node_t *returnNode, bool restart) {
+  static node_t currentAlarm;
+  if ((&currentAlarm == NULL) && !restart) {
+    DEBUG_PRINT(("WARNING! %s called without restart. Defaulting to head.\n"));
+    currentAlarm = *alarms;
+    *returnNode = currentAlarm;
+    return EXIT_SUCCESS;
+  }
+  if (restart) {
+    currentAlarm = *alarms;
+  } else if (currentAlarm.next == NULL || node_is_empty(&currentAlarm)) {
+    return EXIT_FAILURE;
+  } else {
+    currentAlarm = *(currentAlarm.next);
+  }
+  *returnNode = currentAlarm;
+  return EXIT_SUCCESS;
+}
+
+bool is_alarms() {
+  if (node_is_empty(alarms)) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 bool is_alarm_in_1_min(node_t *nextNode) {
   datetime_t t_now;
   rtc_get_datetime(&t_now);
-  if (node_find_next(&t_now, alarms, nextNode)) {
+  if (node_get_next_from_time(&t_now, alarms, nextNode)) {
     // There is no next node
     DEBUG_PRINT(("There is no next alarm.\n"));
     return false;

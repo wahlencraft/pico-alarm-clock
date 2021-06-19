@@ -167,6 +167,13 @@ int main() {
   alarm_t.min = 3;
   add_alarm(&alarm_t, 1);
 
+  node_t alm;
+  if (get_next_alarm(&alm, true)) printf("Could not create alarm.\n");
+  printf("Alm at %d:%d\n", alm.time->hour, alm.time->min);
+  if (get_next_alarm(&alm, false)) printf("Could not get second alarm.\n");
+  printf("Alm at %d:%d\n", alm.time->hour, alm.time->min);
+  if (get_next_alarm(&alm, false)); printf("Could not get third alarm.\n");
+
   printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
