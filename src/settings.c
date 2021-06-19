@@ -109,10 +109,12 @@ void brightness_setting(const int settingNum) {
         (state->setting)++;
         break;
       case MIDDLE_BUTTON:
-        increment_with_wrap(&level, 8);
+        decrement_with_wrap(&level, 8);
+        TM1637_set_brightness(level);
         TM1637_display_right(level, false);
         break;
       case RIGHT_BUTTON:
+        increment_with_wrap(&level, 8);
         TM1637_set_brightness(level);
         TM1637_display_right(level, false);
         break;
