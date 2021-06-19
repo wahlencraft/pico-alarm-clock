@@ -28,10 +28,10 @@
  * Globals
  ******************************************************************************/
 
-volatile struct GlobBinder *state;  // Binder for all states in the global state machine 
+volatile struct GlobBinder *state;  // Binder for all states in the global state machine
 
 /*******************************************************************************
- * Functions 
+ * Functions
  ******************************************************************************/
 
 void fire_alarm(void) {
@@ -66,11 +66,11 @@ int64_t alarm_callback(alarm_id_t id, void *user_data) {
 }
 
 void setup_button(int gpio) {
-  gpio_pull_up(gpio); 
+  gpio_pull_up(gpio);
   gpio_set_irq_enabled_with_callback(
-      gpio, 
-      GPIO_IRQ_EDGE_RISE, 
-      true, 
+      gpio,
+      GPIO_IRQ_EDGE_RISE,
+      true,
       &gpio_callback
       );
 }
@@ -93,7 +93,7 @@ void sleep_to_next_min() {
     .min = -1,
     .sec = 0
   };
-  uart_default_tx_wait_blocking(); 
+  uart_default_tx_wait_blocking();
   TM1637_wait();
   sleep_goto_sleep_until(&time, &display_h_min);
 }
@@ -124,7 +124,7 @@ int main() {
   setup_button(MIDDLE_BUTTON);
   setup_button(RIGHT_BUTTON);
   init_alarms();
-  
+
   DEBUG_PRINT(("\n---START TEST---\n"));
   TM1637_clear();
   // Start the RTC
@@ -138,14 +138,14 @@ int main() {
     .min = 0,
     .sec = 0
   };
-  
+
   // Switch to XOSC
   uart_default_tx_wait_blocking();
   sleep_run_from_xosc();
   TM1637_refresh_frequency();
-  
+
   rtc_set_datetime(&t);
-  
+
   // Setting cases
   #define SETT_NONE 0
   #define SETT_BRIGHT 1
@@ -153,7 +153,7 @@ int main() {
   #define SETT_ALARM 3
   #define SETT_DONE 4
 
-  // Test alarm 
+  // Test alarm
   datetime_t alarm_t = {
     .year = 1970,
     .month = 1,
@@ -182,7 +182,7 @@ int main() {
 
   node_t *runningAlarm = malloc(sizeof(runningAlarm));
   // Main loop
-  // 
+  //
   // if alarmMode:
   //    play song (stay here until interupt)
   // else if sleepMode:
@@ -201,11 +201,11 @@ int main() {
       while (state->alarmMode) {}
       cancel_alarm(almID);
       stop_song();
-    } else if (state->sleepMode) { 
+    } else if (state->sleepMode) {
       if (is_alarm_in_1_min(runningAlarm)) {
         printf("Found alarm! Fire at %02d:%02d:%02d.\n",
-            runningAlarm->time->hour, 
-            runningAlarm->time->min, 
+            runningAlarm->time->hour,
+            runningAlarm->time->min,
             runningAlarm->time->sec);
         sleep_to_next_alarm(runningAlarm);
       } else {
@@ -216,39 +216,42 @@ int main() {
       rtc_disable_alarm();
       DEBUG_PRINT(("Woke up by interupt!\n"));
       int button;
-      state->setting = 1;
+      int setting = 1;
       state->buttonBuffer = 0;
-      while (state->setting != 0) {
-        DEBUG_PRINT(("Outer setting loop. Case is %d\n", state->setting));
-        switch (state->setting) {
-          
+      while (setting != 0) {
+        DEBUG_PRINT(("Outer setting loop. Case is %d\n", setting));
+        switch (setting) {
+
           case SETT_BRIGHT:
             DEBUG_PRINT((" Enter SETT_BRIGHT\n"));
-            brightness_setting(SETT_BRIGHT);
+            setting = brightness_setting(SETT_BRIGHT);
             break;
-          
+
           case SETT_CLOCK:
             DEBUG_PRINT((" Enter SETT_CLOCK\n"));
-            set_clock_setting(SETT_CLOCK);
+            setting = set_clock_setting(SETT_CLOCK);
             break;
-        
+
           case SETT_ALARM:
             DEBUG_PRINT((" Enter SETT_ALARM\n"));
-            set_alarm_setting(SETT_ALARM);
+            setting = set_alarm_setting(SETT_ALARM);
             break;
-          
+
           case SETT_DONE:
             DEBUG_PRINT((" Enter SETT_DONE\n"));
-            done_setting(SETT_DONE);
+            setting = done_setting(SETT_DONE);
             break;
-          
+
           default:
             // Should not happen
-            DEBUG_PRINT(("Runntime Error, buttonBuffer = %d\n", 
+            DEBUG_PRINT(("Runntime Error, buttonBuffer = %d\n",
                   state->buttonBuffer));
             return 1;
         }
       }
+      // Exit settings menu.
+      display_h_min();
+      state->sleepMode = true;
     }
   }
 }
