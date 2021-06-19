@@ -20,6 +20,18 @@
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
+#include <stdbool.h>
+#include <stdio.h>
+#include <pico/stdlib.h>
+#include <hardware/rtc.h>
+#include <hardware/sync.h>
+#include <PicoTM1637.h>
+
+#include <pins.h>
+#include <helpers.h>
+#include <node.h>
+#include <alarm.h>
+
 int brightness_setting(const int setting);
 
 int set_clock_setting(const int setting);
