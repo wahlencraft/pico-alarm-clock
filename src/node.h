@@ -43,7 +43,7 @@ int node_add(node_t *head, datetime_t *time, int song);
  * - @param head is the head of the list to look in.
  * - @param nextNode is a pointer in which the found node will be put. Will be
  *   NONE if list ends early.*/
-int node_find_next(datetime_t *time, node_t *head, node_t *nextNode);
+int node_get_next_from_time(datetime_t *time, node_t *head, node_t *nextNode);
 
 /* Return 1 if this array has no data. */
 int node_is_empty(node_t *head);

@@ -47,6 +47,14 @@ int64_t update_running_song();
  *   argument is an index in the songList array defined in `init_alarms`. */
 void add_alarm(datetime_t *time, int song);
 
+/* Get the next alarm.
+ *
+ * returnNode will change to the next alarm. If @param restart is true, it will 
+ * become the first alarm.
+ *
+ * Exit failure if no next node is found. */
+int get_next_alarm(node_t *returnNode, bool restart);
+
 /* Check if there is an alarm before next minute. Get that alarm.
  *
  * Returns true if *current time* < *next alarm* <= *next minute*.
