@@ -24,7 +24,6 @@ extern struct GlobBinder {
   bool sleepMode;
   bool alarmMode;
   int buttonBuffer;
-  int setting;
 } globBinder;
 
 /* Find if t1 is before (1), same as (2) or after (3) t2. 

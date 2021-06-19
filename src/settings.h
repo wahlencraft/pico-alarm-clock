@@ -1,22 +1,31 @@
-/* The settings called from main are declared here.
+/*******************************************************************************
+ * settings.h
  *
- * Every setting has a very similar structure -- A simple state machine. 
- * 
- * Fist execute some one-time code, then start a loop. The loop lasts as long as
- * the global state variable stays on the setting. In every loop the hardware 
- * buttons are checked for input. The button input is then used to determine 
- * case in a switch case expression.
- */ 
+ * The settings called from main are declared here.
+ *
+ * Every setting has a very similar structure -- A simple state machine.
+ *
+ * - Fist execute some one-time code, then start a loop.
+ * - The loop lasts until the user clicks some buttons to exit.
+ * - In every loop the hardware buttons are checked for input. The button input
+ *   is then used to determine case in a switch case expression which in turn
+ *   makes the requested setting changes happen.
+ * - Return the integer representing what setting should be changed next.
+ *   Usually just the next one.
+ *
+ * For an in-depth view of the setting state machine, and the program flow,
+ * please have a look at the 'Menu' section in README.md.
+ ******************************************************************************/
 
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
-void brightness_setting(const int settingNum);
+int brightness_setting(const int setting);
 
-void set_clock_setting(const int settingNum);
+int set_clock_setting(const int setting);
 
-void set_alarm_setting(const int settingNum); 
+int set_alarm_setting(const int setting);
 
-void done_setting(const int settingNum);
+int done_setting(const int setting);
 
 #endif //SETTINGS_H_

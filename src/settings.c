@@ -95,19 +95,17 @@ void zero_seconds(Times clockState, datetime_t *time) {
  * These are called directly from the main loop based on pressed buttons.
  ******************************************************************************/
 
-void brightness_setting(const int settingNum) {
+int brightness_setting(const int setting) {
   TM1637_display_word("br:", true);
   int level = TM1637_get_brightness(), button;
-  state->setting = settingNum;
   TM1637_display_right(level, false);
-  while (state->setting == settingNum) {
+  while (true) {
     button = fetch_button_with_irq_off();
     switch (button) {
       case 0:
         break;
       case LEFT_BUTTON:
-        (state->setting)++;
-        break;
+        return setting + 1;
       case MIDDLE_BUTTON:
         decrement_with_wrap(&level, 8);
         TM1637_set_brightness(level);
@@ -119,25 +117,24 @@ void brightness_setting(const int settingNum) {
         TM1637_display_right(level, false);
         break;
       default:
-        assert(button == LEFT_BUTTON);
+        DEBUG_PRINT(("ERROR in function %s on line %d\n Impossible state\n",
+              __func__, __LINE__));
+        return -1;
     }
   }
 }
 
-void set_clock_setting(const int settingNum) {
+int set_clock_setting(const int setting) {
   TM1637_display_word("SEt", true);
   int button;
-  bool stay = true;
-  while (stay) {
+  while (true) {
     button = fetch_button_with_irq_off();
     switch (button) {
       case 0:
         break;
       case LEFT_BUTTON:
-        // Increment setting state, exit
-        stay = false;
-        state->setting++;
-        break;
+        // Exit go to next setting
+        return setting + 1;
       case RIGHT_BUTTON:
         // Go into "set clock mode"
         ;
@@ -203,9 +200,9 @@ void set_clock_setting(const int settingNum) {
                   zero_seconds(setClockState, &time);
                   break;
                 case TIMES_DONE:
+                  // Exit, but come back to the same setting.
                   setClockMode = false;
-                  stay = false;
-                  break;
+                  return setting;
                 default:
                   printf("Error: 'set clock state' -> 'right button' : out of bounds.\n");
               }
@@ -219,41 +216,39 @@ void set_clock_setting(const int settingNum) {
   }
 }
 
-void set_alarm_setting(const int settingNum) {
-  printf("Setting = %d\n", state->setting);
+int set_alarm_setting(const int setting) {
+  printf("Setting = %d\n", setting);
   TM1637_display_word("ALAr", true);
   int button;
-  while (state->setting == settingNum) {
+  while (true) {
      button = fetch_button_with_irq_off();
      switch (button) {
        case 0:
          break;
        case LEFT_BUTTON:
-         state->setting++;
-         break;
+         // Exit, go to next setting
+         return setting + 1;
        default:
          DEBUG_PRINT(("ERROR in set_alarm_setting, unknown state."));
      }
    }
 }
 
-void done_setting(const int settingNum) {
-  printf("Setting = %d\n", state->setting);
+int done_setting(const int setting) {
+  printf("Setting = %d\n", setting);
   TM1637_display_word("done", true);
   int button;
-  while (state->setting == settingNum) {
+  while (setting == setting) {
     button = fetch_button_with_irq_off();
     switch (button) {
       case 0:
         break;
       case LEFT_BUTTON:
-        state->setting = 1; // wrap aroud to first setting
-        break;
+        // Exit, wrap around to first setting.
+        return 1;
       case RIGHT_BUTTON:
-        display_h_min();
-        state->setting = 0; // no setting, go back to sleepmode
-        state->sleepMode = true;
-        break;
+        // Exit, then exit settings menu as well.
+        return 0;
     }
   }
 }
