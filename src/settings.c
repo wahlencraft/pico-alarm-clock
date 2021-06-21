@@ -109,7 +109,6 @@ static void show_song(int song, bool updateLeft) {
 
 static void in_or_decrement_time_setting(
     int settingState,
-    int setting,
     datetime_t *time,
     bool increment
   ){
@@ -125,30 +124,20 @@ static void in_or_decrement_time_setting(
   printf(" to %d\n", value);
   timeStart[settingState] = (int8_t) value;
   rtc_set_datetime(time);
-  show_setting(settingState, setting, time, false);
 }
 
-static inline void increment_time_setting(
-    int settingState,
-    int setting,
-    datetime_t *time
-    ){
-  in_or_decrement_time_setting(settingState, setting, time, true);
+static inline void increment_time_setting(int settingState, datetime_t *time) {
+  in_or_decrement_time_setting(settingState, time, true);
 }
 
-static inline void decrement_time_setting(
-    int settingState,
-    int setting,
-    datetime_t *time
-    ){
-  in_or_decrement_time_setting(settingState, setting, time, false);
+static inline void decrement_time_setting(int settingState, datetime_t *time) {
+  in_or_decrement_time_setting(settingState, time, false);
 }
 
 /* Set time->sec to 0 and show. Only needs to work for CLK */
 void zero_seconds(int settingState, datetime_t *time) {
   time->sec = 0;
   rtc_set_datetime(time);
-  show_setting(settingState, CLK, time, false);
 }
 
 /*******************************************************************************
@@ -239,10 +228,12 @@ int set_clock_setting(const int setting) {
                */
               switch (setClockState) {
                 case CLK_DOTW ... CLK_MIN:
-                  decrement_time_setting(setClockState, CLK, &time);
+                  decrement_time_setting(setClockState, &time);
+                  show_setting(setClockState, CLK, &time, false);
                   break;
                 case CLK_SEC:
                   zero_seconds(setClockState, &time);
+                  show_setting(setClockState, CLK, &time, false);
                   break;
                 case CLK_DONE:
                   break;
@@ -259,10 +250,12 @@ int set_clock_setting(const int setting) {
                */
               switch (setClockState) {
                 case CLK_DOTW ... CLK_MIN:
-                  increment_time_setting(setClockState, CLK, &time);
+                  increment_time_setting(setClockState, &time);
+                  show_setting(setClockState, CLK, &time, false);
                   break;
                 case CLK_SEC:
                   zero_seconds(setClockState, &time);
+                  show_setting(setClockState, CLK, &time, false);
                   break;
                 case CLK_DONE:
                   // Exit, but come back to the same setting.
