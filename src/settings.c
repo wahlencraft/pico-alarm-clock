@@ -195,6 +195,8 @@ int set_clock_setting(const int setting) {
         clk_t setClockState = CLK_DOTW;
         int8_t oldSec = -1;
         printf("  setClockState: %d\n", setClockState);
+        rtc_get_datetime(&time);
+        show_setting(setClockState, CLK, &time, true);
         while (setClockMode) {
           button = fetch_button_with_irq_off();
           rtc_get_datetime(&time);
@@ -202,7 +204,7 @@ int set_clock_setting(const int setting) {
             case 0: // no button has been pressed
               // In case clock has changed (by time passing) we need to update
               // the display.
-              if (oldSec != time.sec) {
+              if ((oldSec != time.sec) && setClockState == CLK_SEC) {
                 oldSec = time.sec;
                 show_setting(setClockState, CLK, &time, false);
               }
