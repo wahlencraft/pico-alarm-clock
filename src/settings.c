@@ -54,6 +54,8 @@ static void show_setting(
     "da:", "Hr:", "mi:", "SE:", "done",     "",
     "da:", "Hr:", "mi:", "So:",  "Act", "done"
   };
+  // NOTE: 'So:' actually not needed since song has its own function. But
+  // the spacer needs to be there for the others to get the right index.
   char *weekdays[] = {
     "da:Su", "da:mo", "da:tu", "da:wE", "da:tH", "da:Fr", "da:SA"
   };
@@ -74,11 +76,35 @@ static void show_setting(
       TM1637_display_right(timeStart[settingState], true);
       break;
     default:
-      // The last cases (clk done, alm song, alm activate, alm done) all works
+      // The last cases (clk done, alm activate, alm done) all works
       // the same way.
       assert((settingState >= CLK_DONE) && (settingState <= ALM_DONE));
       TM1637_display_word(labels[setting][settingState], true);
   }
+}
+
+static void show_alarm(int showAlarmState, int alarmIndex, bool updateLeft) {
+  if (updateLeft) {
+    TM1637_display_word("AL:", true);
+  }
+  switch (showAlarmState) {
+    case C_ALM_ALM:
+      TM1637_display_right(alarmIndex, false);
+      break;
+    case C_ALM_NEW:
+      TM1637_display_word("new", true);
+      break;
+    case C_ALM_DONE:
+      TM1637_display_word("done", true);
+      break;
+  }
+}
+
+static void show_song(int song, bool updateLeft) {
+  if (updateLeft) {
+    TM1637_display_word("So:", true);
+  }
+  TM1637_display_right(song, false);
 }
 
 static void in_or_decrement_time_setting(
@@ -278,6 +304,13 @@ int set_alarm_setting(const int setting) {
              case C_ALM_ALM:
                DEBUG_PRINT(("  Enter choose alarm: alarm\n"));
                get_next_alarm(&alarm, true);
+               int alarmIndex = 0;
+               // Show first alarm
+               show_alarm(C_ALM_ALM, alarmIndex, true);
+               printf("  Alarm at D%d %01d:%d01 S%d\n",
+                   alarm.time->dotw, alarm.time->hour,
+                   alarm.time->min, alarm.song
+                   );
                while (chooseAlarmState == C_ALM_ALM) {
                  button = fetch_button_with_irq_off();
                  switch (button) {
@@ -290,7 +323,8 @@ int set_alarm_setting(const int setting) {
                        // No next alarm found
                        chooseAlarmState++;
                      } else {
-                       // Next alarm found. Show it (TODO).
+                       // Next alarm found. Show it.
+                       show_alarm(C_ALM_ALM, ++alarmIndex, false);
                        printf("  Alarm at D%d %01d:%d01 S%d\n",
                            alarm.time->dotw, alarm.time->hour,
                            alarm.time->min, alarm.song
@@ -308,6 +342,8 @@ int set_alarm_setting(const int setting) {
                      bool edit = true;
                      alm_t setAlarmState = ALM_DOTW;
                      printf("  setAlarmState: %d\n", setAlarmState);
+                     // update display
+                     show_setting(setAlarmState, ALM, alarm.time, true);
                      while (edit) {
                        button = fetch_button_with_irq_off();
                        switch (button) {
@@ -323,7 +359,14 @@ int set_alarm_setting(const int setting) {
                             */
                            setAlarmState = (setAlarmState + 1) % ALM_LEN;
                            printf("  setAlarmState: %d\n", setAlarmState);
-                           // TODO
+                           // update display
+                           switch (setAlarmState) {
+                             case ALM_SONG:
+                               show_song(alarm.song, true);
+                               break;
+                             default:
+                               show_setting(setAlarmState, ALM, alarm.time, true);
+                           }
                            break;
                          case MIDDLE_BUTTON:
                            /* Action
@@ -357,6 +400,10 @@ int set_alarm_setting(const int setting) {
                              case ALM_DONE:
                                // Save (TODO) and exit
                                edit = false;
+                               
+                               // update display
+                               printf("  setAlarmState: %d\n", setAlarmState);
+                               show_alarm(C_ALM_ALM, alarmIndex, true);
                                break;
                              default:
                                printf("ERROR in function %s: Right button unknown state\n",
@@ -376,6 +423,7 @@ int set_alarm_setting(const int setting) {
                break;
              case C_ALM_NEW:
                DEBUG_PRINT(("  Enter choose alarm: new\n"));
+               show_alarm(C_ALM_NEW, -1, false);
                while (chooseAlarmState == C_ALM_NEW) {
                  button = fetch_button_with_irq_off();
                  switch (button) {
@@ -392,6 +440,7 @@ int set_alarm_setting(const int setting) {
                break;
              case C_ALM_DONE:
                printf(("  Enter choose alarm: done\n"));
+               show_alarm(C_ALM_DONE, -1, false);
                while (chooseAlarmState == C_ALM_DONE) {
                  button = fetch_button_with_irq_off();
                  switch (button) {
