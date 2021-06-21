@@ -77,12 +77,6 @@ void setup_button(int gpio) {
 
 /* Put cpu to sleep until next minute. Then display time. */
 void sleep_to_next_min() {
-  char strBuff[63];
-  // Print current time
-  datetime_t t;
-  rtc_get_datetime(&t);
-  datetime_to_str(strBuff, 63, &t);
-  DEBUG_PRINT(("Current time: %s\n", strBuff));
   // Set next wakeup
   datetime_t time = {
     .year = -1,
@@ -193,6 +187,10 @@ int main() {
   // else: (button interupt)
   //    open settings menu
   while (true) {
+#   ifdef NDEBUG
+      printf("\n");
+      print_current_time();
+#   endif
     if (state->alarmMode) {
       rtc_disable_alarm();
       start_song(runningAlarm->song);

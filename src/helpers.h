@@ -48,4 +48,6 @@ void increment_with_wrap(int *num, int wrap);
 
 void decrement_with_wrap(int *num, int wrap);
 
+void print_current_time();
+
 #endif //HELPERS_H_
