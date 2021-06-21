@@ -75,3 +75,14 @@ void increment_with_wrap(int *num, int wrap) {
 void decrement_with_wrap(int *num, int wrap) {
   *num = (*num > 0) ? *num - 1 : wrap - 1;
 }
+
+void print_current_time() {
+  char *weekdays[] = {
+    "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+  };
+  datetime_t t;
+  rtc_get_datetime(&t);
+  printf("Current time: %s %d:%02d:%02d\n",
+      weekdays[t.dotw], t.hour, t.min, t.sec
+      );
+}
