@@ -55,6 +55,6 @@ void node_print(node_t *node);
 /* Remove a datetime item based of value. 
  *
  * Fails if item not found.*/
-int node_remove(node_t *head, datetime_t *time);
+int node_remove(node_t *head, datetime_t *time, node_t *copy);
 
 #endif //SOUND_H_
