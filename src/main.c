@@ -93,10 +93,23 @@ void sleep_to_next_min() {
 }
 
 /* Put cpu to sleep until next alarm. Then display time and start alarmMode. */
-void sleep_to_next_alarm(node_t *alarm) {
+void sleep_to_next_alarm(node_t *alarm) { 
+  // Copy time
+  datetime_t time;
+  time.year = -1;
+  time.month = -1;
+  time.day = -1;
+  time.dotw = alarm->time->dotw;
+  time.hour = alarm->time->hour;
+  time.min = alarm->time->min;
+  time.sec = alarm->time->sec;
+  
+  // Prepare for sleep mode
   uart_default_tx_wait_blocking();
   TM1637_wait();
-  sleep_goto_sleep_until(alarm->time, &fire_alarm);
+  
+  // Go to sleep
+  sleep_goto_sleep_until(&time, &fire_alarm);
 }
 
 /*******************************************************************************
@@ -158,39 +171,39 @@ int main() {
     .sec = 0
   };
 
-  node_t *copy = node_create();
-  add_alarm(&alarm_t, 0);
-  alarm_t.min = 3;
-  add_alarm(&alarm_t, 1);
-  alarm_t.min = 5;
-  add_alarm(&alarm_t, 2);
-  alarm_t.min = 7;
-  add_alarm(&alarm_t, 0);
-  alarm_t.min = 10;
-  add_alarm(&alarm_t, 1);
-  alarm_t.min = 12;
-  add_alarm(&alarm_t, 1);
-  alarm_t.min = 14;
-  add_alarm(&alarm_t, 1);
+  //node_t *copy = node_create();
+  //add_alarm(&alarm_t, 0);
+  //alarm_t.min = 3;
+  //add_alarm(&alarm_t, 1);
+  //alarm_t.min = 5;
+  //add_alarm(&alarm_t, 2);
+  //alarm_t.min = 7;
+  //add_alarm(&alarm_t, 0);
+  //alarm_t.min = 10;
+  //add_alarm(&alarm_t, 1);
+  //alarm_t.min = 12;
+  //add_alarm(&alarm_t, 1);
+  //alarm_t.min = 14;
+  //add_alarm(&alarm_t, 1);
 
-  print_all_alarms();
+  //print_all_alarms();
 
-  datetime_t time;
-  get_next_alarm_time(&time, true);
-  get_next_alarm_time(&time, false);
-  printf("Remove alarm at ");
-  print_time(&time, 0);
-  node_t alm;
-  remove_alarm(&time, &alm);
-  printf("ALM:");
-  node_print(&alm);
+  //datetime_t time;
+  //get_next_alarm_time(&time, true);
+  //get_next_alarm_time(&time, false);
+  //printf("Remove alarm at ");
+  //print_time(&time, 0);
+  //node_t alm;
+  //remove_alarm(&time, &alm);
+  //printf("ALM:");
+  //node_print(&alm);
 
-  alm.song = -3;
-  alm.time->min = 6;
-  add_alarm(alm.time, alm.song);
-  printf("ALM (update)");
-  node_print(&alm);
-  print_all_alarms();
+  //alm.song = -3;
+  //alm.time->min = 6;
+  //add_alarm(alm.time, alm.song);
+  //printf("ALM (update)");
+  //node_print(&alm);
+  //print_all_alarms();
 
   printf("Start main loop\n");
   display_h_min();
@@ -199,6 +212,7 @@ int main() {
   state->buttonBuffer = 0;
 
   node_t *runningAlarm = malloc(sizeof(runningAlarm));
+  runningAlarm->time = malloc(sizeof(datetime_t));
   // Main loop
   //
   // if alarmMode:
