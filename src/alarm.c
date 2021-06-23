@@ -87,7 +87,7 @@ void sound_test(void) {
     printf("False\n");
   }
   free(nextAlarm);
-  remove_alarm(&t1);
+  remove_alarm(&t1, NULL);
   node_print_all(alarms);
 }
 
@@ -152,6 +152,10 @@ void init_alarms() {
 /*******************************************************************************
  * Song functions
  ******************************************************************************/
+int get_number_of_songs() {
+  return SONGS;
+}
+
 void start_song(int songNum) {
   songState.num = songNum;
   songState.index = 0;
@@ -206,22 +210,23 @@ void add_alarm(datetime_t *time, int song) {
   }
 }
 
-int get_next_alarm(node_t *returnNode, bool restart) {
-  static node_t currentAlarm;
-  if ((&currentAlarm == NULL) && !restart) {
-    DEBUG_PRINT(("WARNING! %s called without restart. Defaulting to head.\n"));
-    currentAlarm = *alarms;
-    *returnNode = currentAlarm;
-    return EXIT_SUCCESS;
+int get_next_alarm_time(datetime_t *time, bool restart) {
+  static node_t *node = NULL;
+  if (!is_alarms()) {
+    return EXIT_FAILURE;
   }
   if (restart) {
-    currentAlarm = *alarms;
-  } else if (currentAlarm.next == NULL || node_is_empty(&currentAlarm)) {
+    node = alarms;
+  } else if (node == NULL) {
+    printf("ERROR in function %s on line &d, never restarted\n", 
+        __func__, __LINE__);
     return EXIT_FAILURE;
+  } else if (node->next != NULL) {
+    node = node->next;
   } else {
-    currentAlarm = *(currentAlarm.next);
+    return EXIT_FAILURE;
   }
-  *returnNode = currentAlarm;
+  *time = *(node->time);
   return EXIT_SUCCESS;
 }
 
@@ -256,9 +261,17 @@ bool is_alarm_in_1_min(node_t *nextNode) {
   }
 }
 
-void remove_alarm(datetime_t *time) {
-  if (node_remove(alarms, time)) {
+void print_all_alarms() {
+  printf("Printing all alarms.\n");
+  node_print_all(alarms);
+}
+
+void remove_alarm(datetime_t *time, node_t *copy) {
+  if (node_remove(alarms, time, copy)) {
     // Failed to remove alarm. Alarm did not exist. TODO.
-    DEBUG_PRINT(("Tried to remove alarm, but alarm did not exist."));
+#   ifdef NDEBUG
+      printf("  Tried to remove alarm, but alarm did not exist.\n");
+      print_all_alarms();
+#   endif
   }
 }

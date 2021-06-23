@@ -27,6 +27,8 @@ void sound_test();
 
 void init_alarms();
 
+int get_number_of_songs();
+
 /* Start a new song with song 'songNum'. */
 void start_song(int songNum);
 
@@ -50,13 +52,15 @@ void add_alarm(datetime_t *time, int song);
 /* True if there is alarms. */
 bool is_alarms();
 
-/* Get the next alarm.
+/* Get the next alarm time. Function remembers if it has been called before.
  *
- * returnNode will change to the next alarm. If @param restart is true, it will 
- * become the first alarm.
+ * - @param time: Pointer where the time will be returned.
+ * - @param restart: If true the list will restart, and the first time will be
+ *   used. Otherwise the next time (compared to last call) will be given.
+ *   Should always be true on the first call.
  *
  * Exit failure if no next node is found. */
-int get_next_alarm(node_t *returnNode, bool restart);
+int get_next_alarm_time(datetime_t *time, bool restart);
 
 /* Check if there is an alarm before next minute. Get that alarm.
  *
@@ -64,7 +68,9 @@ int get_next_alarm(node_t *returnNode, bool restart);
  * If true @parmam returnNode will point to said alarm.*/
 bool is_alarm_in_1_min(node_t *returnNode);
 
-/* Remove the alarm at @param time. */
-void remove_alarm(datetime_t *time);
+void print_all_alarms();
+
+/* Remove the alarm at @param time. Get a copy (if not NULL)*/
+void remove_alarm(datetime_t *time, node_t *copy);
 
 #endif //ALARM_H_

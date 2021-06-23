@@ -22,8 +22,8 @@ void node_print(node_t *node) {
         node, node->next);
     return;
   }
-  printf("  time: D%d %02d:%02d:%02d song: %d, addr: 0x%x, next: 0x%x\n", 
-      node->time->dotw, node->time->hour, node->time->min, 
+  printf("  time [0x%x]: D%d %02d:%02d:%02d song: %d, addr: 0x%x, next: 0x%x\n", 
+      node->time, node->time->dotw, node->time->hour, node->time->min, 
       node->time->sec, node->song, node, node->next
       );
 }
@@ -113,10 +113,15 @@ int node_get_next_from_time(datetime_t *time, node_t *head, node_t *foundNode) {
   return EXIT_FAILURE;
 }
 
-int node_remove(node_t *head, datetime_t *time) {
+int node_remove(node_t *head, datetime_t *time, node_t *copy) {
   if (compare_datetimes(head->time, time) == DATETIME_SAME) {
     // Special case, removing head.
     DEBUG_PRINT(("Removing head\n"));
+    if (copy != NULL) {
+      copy->time = head->time;
+      copy->song = head->song;
+      copy->next = NULL; // The copy is standalone and not in the linked list.
+    }
     if (head->next == NULL) {
       // List will become empty
       head->next = head;
@@ -149,6 +154,11 @@ int node_remove(node_t *head, datetime_t *time) {
         }
       case DATETIME_SAME:
         DEBUG_PRINT((" Found item [0x%x], deleting\n", current));
+        if (copy != NULL) {
+          copy->time = current->time;
+          copy->song = current->song;
+          copy->next = NULL; // The copy is standalone and not in the linked list.
+        }
         last->next = current->next;
         free(current);
         return EXIT_SUCCESS;
@@ -218,14 +228,6 @@ int node_test(void) {
     .min = 2,
     .sec = 0
   };
-  node_t *found = malloc(sizeof(found));
-  if (!node_get_next_from_time(&tf, head, found)) {
-    printf("Found D%d %d:%d:%d, song: %d\n", 
-      found->time->dotw, found->time->hour, found->time->min, found->time->sec,
-      found->song);
-  } else {
-    printf("Found NULL\n");
-  }
 
   int status = compare_datetimes(&t1, &t2);
   printf("Compare datetimes returned: %d\n", status);

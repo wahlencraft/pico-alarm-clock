@@ -157,16 +157,40 @@ int main() {
     .min = 1,
     .sec = 0
   };
+
+  node_t *copy = node_create();
   add_alarm(&alarm_t, 0);
   alarm_t.min = 3;
   add_alarm(&alarm_t, 1);
+  alarm_t.min = 5;
+  add_alarm(&alarm_t, 2);
+  alarm_t.min = 7;
+  add_alarm(&alarm_t, 0);
+  alarm_t.min = 10;
+  add_alarm(&alarm_t, 1);
+  alarm_t.min = 12;
+  add_alarm(&alarm_t, 1);
+  alarm_t.min = 14;
+  add_alarm(&alarm_t, 1);
 
+  print_all_alarms();
+
+  datetime_t time;
+  get_next_alarm_time(&time, true);
+  get_next_alarm_time(&time, false);
+  printf("Remove alarm at ");
+  print_time(&time, 0);
   node_t alm;
-  if (get_next_alarm(&alm, true)) printf("Could not create alarm.\n");
-  printf("Alm at %d:%d\n", alm.time->hour, alm.time->min);
-  if (get_next_alarm(&alm, false)) printf("Could not get second alarm.\n");
-  printf("Alm at %d:%d\n", alm.time->hour, alm.time->min);
-  if (get_next_alarm(&alm, false)); printf("Could not get third alarm.\n");
+  remove_alarm(&time, &alm);
+  printf("ALM:");
+  node_print(&alm);
+
+  alm.song = -3;
+  alm.time->min = 6;
+  add_alarm(alm.time, alm.song);
+  printf("ALM (update)");
+  node_print(&alm);
+  print_all_alarms();
 
   printf("Start main loop\n");
   display_h_min();

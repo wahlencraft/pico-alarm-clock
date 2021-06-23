@@ -50,4 +50,6 @@ void decrement_with_wrap(int *num, int wrap);
 
 void print_current_time();
 
+void print_time(datetime_t *time, int indent);
+
 #endif //HELPERS_H_
