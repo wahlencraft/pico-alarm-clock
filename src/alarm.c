@@ -241,6 +241,9 @@ bool is_alarms() {
 bool is_alarm_in_1_min(node_t *nextNode) {
   datetime_t t_now;
   rtc_get_datetime(&t_now);
+  if (!is_alarms()) {
+    return false;
+  }
   if (node_get_next_from_time(&t_now, alarms, nextNode)) {
     // There is no next node
     DEBUG_PRINT(("There is no next alarm.\n"));

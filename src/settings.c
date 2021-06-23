@@ -297,17 +297,136 @@ int set_alarm_setting(const int setting) {
          ;
          datetime_t alarmTime;
          c_alm_t chooseAlarmState = is_alarms() ? C_ALM_ALM : C_ALM_NEW;
+         bool createNewAlarm = false;
+         bool editAlarm = false;
          while (true) {
            switch (chooseAlarmState) {
              case C_ALM_ALM:
                DEBUG_PRINT(("Enter choose alarm: alarm\n"));
-               get_next_alarm_time(&alarmTime, true);
                int alarmIndex = 0;
-               // Show first alarm
-               show_alarm(C_ALM_ALM, alarmIndex, true);
-               printf("Alarm %d at ", alarmIndex);
-               print_time(&alarmTime, 0);
+               if (!createNewAlarm) {
+                get_next_alarm_time(&alarmTime, true);
+                // Show first alarm
+                show_alarm(C_ALM_ALM, alarmIndex, true);
+                printf("Alarm %d at ", alarmIndex);
+                print_time(&alarmTime, 0);
+               }
                while (chooseAlarmState == C_ALM_ALM) {
+                 if (editAlarm || createNewAlarm) {
+                   node_t alarm;
+                   alm_t setAlarmState = ALM_DOTW;
+                   if (editAlarm) {
+                     // get alarm from list, remove it
+                     remove_alarm(&alarmTime, &alarm);
+                   } else if (createNewAlarm) {
+                     // make a default alarm
+                     alarmTime.dotw = 1;
+                     alarmTime.hour = 0;
+                     alarmTime.min = 0;
+                     alarmTime.sec = 0;
+                     alarm.time = &alarmTime;
+                     alarm.song = 0;
+                   }
+                   
+                   // update display
+                   printf("  setAlarmState: %d\n", setAlarmState);
+                   show_setting(setAlarmState, ALM, alarm.time, true);
+                   print_all_alarms();
+                   
+                   while (editAlarm || createNewAlarm) {
+                     button = fetch_button_with_irq_off();
+                     switch (button) {
+                       case 0:
+                         // no button has been pressed
+                         break;
+                       case LEFT_BUTTON:
+                         /* Go to next alarm setting
+                          *
+                          * dotw -> hour -> min -> song -> confirm -> done
+                          *   ^                                         |
+                          *   |_________________________________________|
+                          */
+                         setAlarmState = (setAlarmState + 1) % ALM_LEN;
+                         printf("  setAlarmState: %d\n", setAlarmState);
+                         // update display
+                         switch (setAlarmState) {
+                           case ALM_SONG:
+                             show_song(alarm.song, true);
+                             break;
+                           default:
+                             show_setting(setAlarmState, ALM, alarm.time, true);
+                         }
+                         break;
+                       case MIDDLE_BUTTON:
+                         /* Action
+                          * - dotw, hour, min: Decrement
+                          * - song: Play TODO
+                          * - done: Do nothing
+                          */
+                         switch (setAlarmState) {
+                           case ALM_DOTW ... ALM_MIN:
+                             decrement_time_setting(setAlarmState, alarm.time);
+                             show_setting(setAlarmState, ALM, alarm.time, false);
+                             break;
+                           case ALM_SONG:
+                             break;
+                           case ALM_DONE:
+                             break;
+                           default:
+                             printf("ERROR in function %s: Left button unknown state\n",
+                                 __func__);
+                         }
+                         break;
+                       case RIGHT_BUTTON:
+                         /* Action
+                          * - dotw, hour, min: Increment
+                          * - song: Increment
+                          * - done: Save and exit edit mode.
+                          */
+                         switch (setAlarmState) {
+                           case ALM_DOTW ... ALM_MIN:
+                             increment_time_setting(setAlarmState, alarm.time);
+                             show_setting(setAlarmState, ALM, alarm.time, false);
+                             break;
+                           case ALM_SONG:
+                             increment_with_wrap(
+                                 &(alarm.song),
+                                 get_number_of_songs()
+                                 );
+                             show_song(alarm.song, false);
+                             break;
+                           case ALM_DONE:
+                             createNewAlarm = false;
+                             editAlarm = false;
+                             
+                             // old node already removed, just add the edited
+                             // verison to the list.
+                             add_alarm(alarm.time, alarm.song);
+                             print_all_alarms();
+
+                             // NOTE: Alarms will always come in cronological
+                             // order. So the alarm might move in the list
+                             // after an edit.
+
+                             // always restart menu
+                             get_next_alarm_time(&alarmTime, true);
+                             alarmIndex = 0;
+
+                             // update display
+                             printf("  setAlarmState: %d\n", setAlarmState);
+                             show_alarm(C_ALM_ALM, alarmIndex, true);
+                             break;
+                           default:
+                             printf("ERROR in function %s: Right button unknown state\n",
+                                 __func__);
+                         }
+                         break;
+                       default:
+                         printf("ERROR: SET_ALARM\n");
+                     }
+                   }
+                 }
+                 
                  button = fetch_button_with_irq_off();
                  switch (button) {
                    case 0:
@@ -381,102 +500,7 @@ int set_alarm_setting(const int setting) {
                      break;
                    case RIGHT_BUTTON:
                      // Edit current alarm
-                     ;
-                     node_t alarm;
-                     remove_alarm(&alarmTime, &alarm);
-                     bool edit = true;
-                     alm_t setAlarmState = ALM_DOTW;
-                     printf("  setAlarmState: %d\n", setAlarmState);
-                     // update display
-                     show_setting(setAlarmState, ALM, alarm.time, true);
-                     print_all_alarms();
-                     while (edit) {
-                       button = fetch_button_with_irq_off();
-                       switch (button) {
-                         case 0:
-                           // no button has been pressed
-                           break;
-                         case LEFT_BUTTON:
-                           /* Go to next alarm setting
-                            *
-                            * dotw -> hour -> min -> song -> confirm -> done
-                            *   ^                                         |
-                            *   |_________________________________________|
-                            */
-                           setAlarmState = (setAlarmState + 1) % ALM_LEN;
-                           printf("  setAlarmState: %d\n", setAlarmState);
-                           // update display
-                           switch (setAlarmState) {
-                             case ALM_SONG:
-                               show_song(alarm.song, true);
-                               break;
-                             default:
-                               show_setting(setAlarmState, ALM, alarm.time, true);
-                           }
-                           break;
-                         case MIDDLE_BUTTON:
-                           /* Action
-                            * - dotw, hour, min: Decrement
-                            * - song: Play TODO
-                            * - done: Do nothing
-                            */
-                           switch (setAlarmState) {
-                             case ALM_DOTW ... ALM_MIN:
-                               decrement_time_setting(setAlarmState, alarm.time);
-                               show_setting(setAlarmState, ALM, alarm.time, false);
-                               break;
-                             case ALM_SONG:
-                               break;
-                             case ALM_DONE:
-                               break;
-                             default:
-                               printf("ERROR in function %s: Left button unknown state\n",
-                                   __func__);
-                           }
-                           break;
-                         case RIGHT_BUTTON:
-                           /* Action
-                            * - dotw, hour, min: Increment
-                            * - song: Increment
-                            * - done: Save and exit edit mode.
-                            */
-                           switch (setAlarmState) {
-                             case ALM_DOTW ... ALM_MIN:
-                               increment_time_setting(setAlarmState, alarm.time);
-                               show_setting(setAlarmState, ALM, alarm.time, false);
-                               break;
-                             case ALM_SONG:
-                               increment_with_wrap(
-                                   &(alarm.song), 
-                                   get_number_of_songs()
-                                   );
-                               show_song(alarm.song, false);
-                               break;
-                             case ALM_DONE:
-                               // old node already removed, just add the edited
-                               // verison to the list.
-                               add_alarm(alarm.time, alarm.song);
-                               print_all_alarms();
-                               
-                               // NOTE: Alarms will always come in cronological
-                               // order. So the alarm might move in the list
-                               // after this edit.
-                               
-                               edit = false;
-                               
-                               // update display
-                               printf("  setAlarmState: %d\n", setAlarmState);
-                               show_alarm(C_ALM_ALM, alarmIndex, true);
-                               break;
-                             default:
-                               printf("ERROR in function %s: Right button unknown state\n",
-                                   __func__);
-                           }
-                           break;
-                         default:
-                           printf("ERROR: SET_ALARM\n");
-                       }
-                     }
+                     editAlarm = true;
                      break;
                    default:
                      printf("ERROR in %s. Unknown button for 'choose alarm: alarm'\n");
@@ -495,8 +519,10 @@ int set_alarm_setting(const int setting) {
                      chooseAlarmState++;
                      break;
                    case RIGHT_BUTTON:
-                     // Create new alarm TODO
-                     printf("  Create new alarm/alarm/gc\n");
+                     // Create new alarm
+                     printf("  Create new alarm\n");
+                     createNewAlarm = true; 
+                     chooseAlarmState = C_ALM_ALM;
                      break;
                  }
                }
@@ -511,7 +537,11 @@ int set_alarm_setting(const int setting) {
                      break;
                    case LEFT_BUTTON:
                      // Wrap around
-                     chooseAlarmState = 0;
+                     if (is_alarms()) {
+                       chooseAlarmState = C_ALM_ALM;
+                     } else {
+                       chooseAlarmState = C_ALM_NEW;
+                     }
                      break;
                    case RIGHT_BUTTON:
                      // Exit but stay in alarm setting
