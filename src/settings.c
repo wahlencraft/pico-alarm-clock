@@ -343,16 +343,39 @@ int set_alarm_setting(const int setting) {
                            show_alarm(C_ALM_ALM, alarmIndex, true);
                            break;
                          case RIGHT_BUTTON:
-                           DEBUG_PRINT(("    Removing alarm\n"));
+#                          ifdef NDEBUG
+                             printf("  Removing alarm %d at", alarmIndex);
+                             print_time(&alarmTime, 1);
+#                          endif
+                           print_all_alarms();
                            removing = false;
+                           datetime_t timeCopy = alarmTime;
                            // Remove current alarm, and go to next one
-                           if (get_next_alarm_time(&alarmTime, false)) {
-                             // No next alarm, go to 'choose alarm: new' instead.
-                             chooseAlarmState++;
+                           bool restart = (alarmIndex == 0) ? true : false;
+                           if (alarmIndex != 0) {
+                             if (get_next_alarm_time(&alarmTime, false)) {
+                               // No next alarm, go to 'choose alarm: new' instead.
+                               DEBUG_PRINT(("    No next alarm, go to choose alarm: new\n"));
+                               chooseAlarmState++;
+                             } else {
+                               show_alarm(C_ALM_ALM, ++alarmIndex, true);
+                               printf("  Alarm %d at ", alarmIndex);
+                               print_time(&alarmTime, 0);
+                             }
+                             remove_alarm(&timeCopy, NULL);
+                             print_all_alarms();
                            } else {
-                             show_alarm(C_ALM_ALM, ++alarmIndex, true);
+                             // We need to do this differently when removing
+                             // the first node.
+                             remove_alarm(&alarmTime, NULL);
+                             if (get_next_alarm_time(&alarmTime, true)) {
+                               // No alarms left
+                               chooseAlarmState++;
+                             } else {
+                               show_alarm(C_ALM_ALM, ++alarmIndex, true);
+                             }
                            }
-                           remove_alarm(&alarmTime, NULL);
+                           break;
                        }
                      }
                      break;
