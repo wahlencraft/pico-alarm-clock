@@ -48,14 +48,58 @@ power.
 Under normal circumstances will the display show current time and wait for
 alarms to fire. When the clock is turned on the time will be `Monday 00:00:00`
 and there is no set alarms. To change the time or add an alarm, open the menu.
-### Menu
+### The Settings Menu
 If any button is pressed the menu will open. In the menu you can change the
 display brightness, set clock time and set alarms. See the flowchart below for
-the entire state machine.
+a quick overview or read the following sections for an in-depth description.
 ![image](images/MenuFlow.png)
-### Alarms
-New alarms can be set from the menu. In addition to having a time every alarm
-also has a song associated with it. That way you can have different sounds for
-different alarms.
+#### Brightness
+In the brightness state the display will show `br: x`, where `x` will change with
+the brightness level. In- or decrease the brightness with the M and R buttons.
+The brightness has 8 levels, ranging from 0 to 7. Although there seems to be
+a very little change in brightness in the higher levels.
+#### Set Clock
+To enter Set Clock press the R button when the display shows `SEt`. Here you
+can change the running clock.
+- **Day of the week** (`da:xx`): In or decrease with the M and R buttons.
+  A list of the days and their two letters:
+  - Monday: `mo`
+  - Tuesday: `tU`
+  - Wednesday: `wE`
+  - Thursday: `tH`
+  - Friday: `Fr`
+  - Saturday: `SA`
+  - Sunday: `SU`
+- **Hour** (`Hr:xx`): In- or decrease with the M and R buttons.
+- **Minute** (`mi:xx`): In- or decrease with the M and R buttons.
+- **Seconds** (`SE:xx`): Zero the counter with the M or R button. Please note
+  that this only sets the current second to 0, it doesn't restart the RTC. This
+  makes it impossible to set exactly when a second starts.
+- **Done** (`done`): Go back to the main menu.
+#### Alarms
+To enter Alarms press the R button when the display shows `ALAr`. Then you will
+be navigated to the first alarm, called `AL: 0`. Given that this alarm exists.
+Otherwise you will see `nEw` on the display.
 
-When an alarm fires, press any putton to stop it.
+To create a new alarm, navigate to `nEw` and press R. That will open the edit
+state for a new alarm.
+
+To edit an existing alarm, navigate to `AL: x` and press R.
+
+Editing an alarm works a lot like setting the clock. With some differences:
+- You can not specify seconds
+- You can specify song. This is what sound the alarm will make. Use the
+  R button to increment song and M button to listen to it (not yet
+  implemented).
+- Activate: Not yet implemented
+
+Note that when exiting from `done`, you will always get to the first alarm 
+`AL: 0`. This is because the list of alarms will always be in chronological
+order, and might need rearranging after an edit.
+
+To delete an alarm, navigate to it and press M. Then press R. To abort press
+any other button.
+### The Alarms
+If there is any set alarms, they will fire at the specified time. When an alarm
+fires it will continue to make sound until any button is pressed to stop it.
+
