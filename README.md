@@ -1,5 +1,6 @@
 # Pico Alarm Clock
 
+![image](images/showcase.jpg)
 ## Introduction
 This is an alarm clock that is running on Raspberry Pi Pico and is displaying
 on a TM1637 7-segment display. In this project I try to stay close to the 
