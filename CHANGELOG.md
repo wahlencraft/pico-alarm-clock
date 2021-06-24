@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0] - 2021-06-24
+### Added
+- Create, edit and remove alarms
+### Changed
+- The brightness setting can now be increased and decreased, just like the other
+  settings.
+
 ## [0.1.0] - 2021-06-15
 ### Added
 - Show time in 24h format.
