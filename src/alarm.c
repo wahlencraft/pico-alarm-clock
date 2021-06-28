@@ -93,7 +93,13 @@ void sound_test(void) {
 
 void init_alarms() {
   DEBUG_PRINT(("INIT ALARMS\n"));
+  // LED
+  gpio_init(LED_PIN);
+  gpio_set_dir(LED_PIN, GPIO_OUT);
+  
   // PWM
+  gpio_init(BUZ_PIN);
+  gpio_set_dir(BUZ_PIN, GPIO_OUT);
   gpio_set_function(BUZ_PIN, GPIO_FUNC_PWM);
   uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
   uint channel = pwm_gpio_to_channel(BUZ_PIN);
@@ -150,6 +156,14 @@ void init_alarms() {
 }
 
 /*******************************************************************************
+ * LED functions
+ ******************************************************************************/
+
+static void drive_led_high(bool high) {
+  gpio_put(LED_PIN, high);
+}
+
+/*******************************************************************************
  * Song functions
  ******************************************************************************/
 int get_number_of_songs() {
@@ -165,6 +179,7 @@ void start_song(int songNum) {
 void stop_song() {
   uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
   pwm_set_enabled(slice_num, false);
+  drive_led_high(false);
 }
 
 int64_t update_running_song(void) {
@@ -187,6 +202,7 @@ int64_t update_running_song(void) {
     printf("  Play %d Hz for %d ms\n", note->freq, note->playDuration);
     songState.phase = 1;
     retval = note->playDuration;
+    drive_led_high(true);
   } else {
     // phase 1
     pwm_set_enabled(slice_num, false);
@@ -195,6 +211,7 @@ int64_t update_running_song(void) {
       0 : songState.index + 1;
     songState.phase = 0;
     retval = note->waitDuration;
+    drive_led_high(false);
   }
   return retval;
 }

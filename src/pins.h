@@ -19,4 +19,7 @@
 #define MIDDLE_BUTTON 21
 #define LEFT_BUTTON 20
 
+// LED
+#define LED_PIN 25
+
 #endif // PINS_H_h

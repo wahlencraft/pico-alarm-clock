@@ -125,8 +125,6 @@ int main() {
   // Initiate
   stdio_init_all();
   TM1637_init(CLK_PIN, DIO_PIN);
-  gpio_init(BUZ_PIN);
-  gpio_set_dir(BUZ_PIN, GPIO_OUT);
   setup_button(LEFT_BUTTON);
   setup_button(MIDDLE_BUTTON);
   setup_button(RIGHT_BUTTON);
@@ -239,10 +237,10 @@ int main() {
       stop_song();
     } else if (state->sleepMode) {
       if (is_alarm_in_1_min(runningAlarm)) {
-        printf("Found alarm! Fire at %02d:%02d:%02d.\n",
-            runningAlarm->time->hour,
-            runningAlarm->time->min,
-            runningAlarm->time->sec);
+#       ifdef NDEBUG
+          printf("Found Alarm! Fire at ");
+          print_time(runningAlarm->time, 0);
+#       endif
         sleep_to_next_alarm(runningAlarm);
       } else {
         sleep_to_next_min();
