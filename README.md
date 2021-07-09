@@ -33,7 +33,7 @@ time based events.
 
 
 ### Circuit
-TODO
+![image](images/circuit.png)
 
 ### Load Code
 If loading code over UART (from for example a Raspberry Pi) some unexpected
