@@ -41,26 +41,38 @@ void stop_song();
  * at thease intervals, sound might glich out. */
 int64_t update_running_song();
 
+/* Turn of led. */
+void led_clear();
+
 /* Add a new alarm.
  *
  * - @param *time: The datetime for when the alarm should fire. Only dotw,
  *   hour, min and sec are important.
  * - @param song: The song that should be played when the alarm fires. The
- *   argument is an index in the songList array defined in `init_alarms`. */
-void add_alarm(datetime_t *time, int song);
+ *   argument is an index in the songList array defined in `init_alarms`. 
+ * - @param active: If the alarm is activated of not. */
+void add_alarm(datetime_t *time, int song, bool active);
+
+/* Light led if alarm is active, otherwise turn it off. */
+void show_if_alarm_active(node_t *alarm);
+
+inline void toggle_alarm_active(node_t *alarm) {
+  alarm->active = !alarm->active;
+  DEBUG_PRINT(("Alarm is now %d\n", alarm->active));
+}
 
 /* True if there is alarms. */
 bool is_alarms();
 
-/* Get the next alarm time. Function remembers if it has been called before.
+/* Get the next. Function remembers if it has been called before.
  *
- * - @param time: Pointer where the time will be returned.
+ * - @param alarm: Pointer where the alarm will be returned.
  * - @param restart: If true the list will restart, and the first time will be
  *   used. Otherwise the next time (compared to last call) will be given.
  *   Should always be true on the first call.
  *
  * Exit failure if no next node is found. */
-int get_next_alarm_time(datetime_t *time, bool restart);
+int get_next_alarm(node_t *alarm, bool restart);
 
 /* Check if there is an alarm before next minute. Get that alarm.
  *

@@ -2,10 +2,9 @@
 
 void node_print_all(node_t *head) {
   printf("Printing nodes:\n");
-  if (head->next == head) {
+  if (head == NULL) {
     // list is empty
-    printf("  time: NULL song: NULL, addr: 0x%x, next: 0x%x\n",
-        head, head->next);
+    printf("  List is empty\n");
     return;
   }
   node_t *current = head;
@@ -16,83 +15,79 @@ void node_print_all(node_t *head) {
 }
 
 void node_print(node_t *node) {
-  if (node->next == node) {
+  if (node == NULL) {
     // list is empty
-    printf("  time: NULL song: NULL, addr: 0x%x, next: 0x%x\n",
-        node, node->next);
+    printf("  List is empty\n");
     return;
   }
-  printf("  time [0x%x]: D%d %02d:%02d:%02d song: %d, addr: 0x%x, next: 0x%x\n", 
-      node->time, node->time->dotw, node->time->hour, node->time->min, 
-      node->time->sec, node->song, node, node->next
+  printf("  time [0x%x]: D%d %02d:%02d:%02d song: %d, active: %d, addr: 0x%x, next: 0x%x\n",
+      node->time,
+      node->time->dotw, node->time->hour, node->time->min, node->time->sec,
+      node->song, node->active, node, node->next
       );
 }
 
-node_t *node_create() {
-  node_t *head = NULL;
-  head = (node_t *) malloc(sizeof(node_t));
-  if (head == NULL) {
-    printf("ERROR at line %d in function %s in file %s\nCould not create node.\n",
-        __LINE__, __func__, __FILE__);
-    return NULL;
-  }
-  head->time = NULL;
-  head->song = -1;  // nonsense value
-  head->next = head;
-  return head;
-}
-
-int node_add(node_t *head, datetime_t *time_p, int song) {
+int node_add(node_t **head, node_t *newNode) {
   DEBUG_PRINT(("Adding to list: "));
-  datetime_t *time = malloc(sizeof(time));
-  *time = *time_p;
-  if (node_is_empty(head)) {
+  node_print(newNode);
+  if (node_is_empty(*head)) {
     // Singular case. This is an empty list
-    DEBUG_PRINT(("First item in list\n"));
-    head->time = time;
-    head->song = song;
-    head->next = NULL;
+    DEBUG_PRINT(("List empty, adding first item\n"));
+    *head = newNode;
+    newNode->next = NULL;
     return 0;
     }
-  node_t *current = head;
-  while (true) {
-    if (compare_datetimes(current->time, time) == DATETIME_AFTER) {
-      // Insert in list
-      DEBUG_PRINT(("inserting\n"));
-      
-      node_t *next_node = NULL;
-      next_node = (node_t *) malloc(sizeof(node_t));
-      next_node->time = current->time;
-      next_node->song = current->song;
-      next_node->next = current->next;
-
-      current->time = time;
-      current->song = song;
-      current->next = next_node;
+  int compCode = compare_datetimes((*head)->time, newNode->time);
+  switch (compCode) {
+    case DATETIME_AFTER:
+      // Singular case. The new node is first
+      newNode->next = *head;
+      *head = newNode;
       return 0;
-    } else if (compare_datetimes(current->time, time) == DATETIME_SAME) {
-      // This date is already in the list. There can only be one alarm
-      // per datetime, so this should not happen. Pass error to caller.
-      DEBUG_PRINT(("WARNING! Can't add alarm, datetime already exists.\n"));
+    case DATETIME_SAME:
+      DEBUG_PRINT(("WARNING: New node at same time as head\n"));
+      DEBUG_PRINT(("  New:"));
+      node_print(newNode);
+      DEBUG_PRINT(("  Head:"));
+      node_print(*head);
       return 1;
-    } else if (current->next == NULL) {
-      // Append to end of list
-      DEBUG_PRINT(("appending\n"));
-      current->next = (node_t *) malloc(sizeof(node_t));
-      current->next->time = time;
-      current->next->song = song;
-      current->next->next = NULL;
-      return 0;
-    } else {
-      current = current->next;
+  }
+  node_t *last = *head;
+  node_t *current = (*head)->next;
+  while (current != NULL) {
+    compCode = compare_datetimes(current->time, newNode->time);
+    switch (compCode) {
+      case DATETIME_BEFORE:
+        // Continue forward in the list
+        last = current;
+        current = current->next;
+        break;
+      case DATETIME_SAME:
+        DEBUG_PRINT(("WARNING: New node at same time as other ("));
+        print_time(newNode->time, 1);
+        DEBUG_PRINT((") \n"));
+        return 1;
+      case DATETIME_AFTER:
+        // Insert in list
+        DEBUG_PRINT(("inserting\n"));
+        last->next = newNode;
+        newNode->next = current;
+        return 0;
+      default:
+        printf("ERROR in function %s at line %d: impossible compCode\n",
+            __func__, __LINE__);
+        return 1;
     }
   }
+  // Run out of list. Append at end
+  DEBUG_PRINT(("Appending\n"));
+  last->next = newNode;
+  newNode->next = NULL;
 }
 
 int node_get_next_from_time(datetime_t *time, node_t *head, node_t *foundNode) {
   node_t *current = head;
   while (current != NULL) {
-    node_print(current);
     int dateStatus = compare_datetimes(current->time, time);
     switch (dateStatus) {
       case DATETIME_BEFORE:
@@ -104,7 +99,7 @@ int node_get_next_from_time(datetime_t *time, node_t *head, node_t *foundNode) {
         return EXIT_SUCCESS;
       default:
         DEBUG_PRINT(("ERROR in node_get_next_from_time, impossible state."));
-        return EXIT_FAILURE;  
+        return EXIT_FAILURE;
       }
   }
   // We run out of nodes. There is no node after the specified time.
@@ -113,6 +108,7 @@ int node_get_next_from_time(datetime_t *time, node_t *head, node_t *foundNode) {
   return EXIT_FAILURE;
 }
 
+// TODO. This needs to be rewritten.
 int node_remove(node_t *head, datetime_t *time, node_t *copy) {
   if (compare_datetimes(head->time, time) == DATETIME_SAME) {
     // Special case, removing head.
@@ -120,6 +116,7 @@ int node_remove(node_t *head, datetime_t *time, node_t *copy) {
     if (copy != NULL) {
       copy->time = head->time;
       copy->song = head->song;
+      copy->active = head->active;
       copy->next = NULL; // The copy is standalone and not in the linked list.
     }
     if (head->next == NULL) {
@@ -131,6 +128,7 @@ int node_remove(node_t *head, datetime_t *time, node_t *copy) {
       node_t *child = head->next;
       head->time = child->time;
       head->song = child->song;
+      head->active = child->active;
       head->next = child->next;
       free(child);
       return EXIT_SUCCESS;
@@ -157,6 +155,7 @@ int node_remove(node_t *head, datetime_t *time, node_t *copy) {
         if (copy != NULL) {
           copy->time = current->time;
           copy->song = current->song;
+          copy->active = current->active;
           copy->next = NULL; // The copy is standalone and not in the linked list.
         }
         last->next = current->next;
@@ -175,7 +174,7 @@ int node_remove(node_t *head, datetime_t *time, node_t *copy) {
 }
 
 int node_is_empty(node_t *head) {
-  return (head->next == head);
+  return (head == NULL);
 }
 
 int node_test(void) {
@@ -207,30 +206,5 @@ int node_test(void) {
     .min = 20,
     .sec = 0
   };
-  node_t *head = node_create();
-  node_print_all(head);
-  if (node_add(head, &t2, 0)) {
-    printf("Failed to add t2\n");
-  }
-  if (node_add(head, &t3, 1)) {
-    printf("Failed to add t3\n");
-  }
-  if (node_add(head, &t1, 4)) {
-    printf("Failed to add t3\n");
-  }
-  node_print_all(head);
-  datetime_t tf = {
-    .year = -1,
-    .month = -1,
-    .day = -1,
-    .dotw = 1, // 0 is Sunday
-    .hour = 17,
-    .min = 2,
-    .sec = 0
-  };
-
-  int status = compare_datetimes(&t1, &t2);
-  printf("Compare datetimes returned: %d\n", status);
 }
-
 

@@ -31,6 +31,16 @@ int compare_datetimes(datetime_t *time1_input, datetime_t *time2_input) {
   return DATETIME_SAME;
 }
 
+void deep_copy_time(datetime_t *t1, datetime_t *t2) {
+  t2->year = t1->year;
+  t2->month = t1->month;
+  t2->day = t1->day;
+  t2->dotw = t1->dotw;
+  t2->hour = t1->hour;
+  t2->min = t1->min;
+  t2->sec = t1->sec;
+}
+
 void display_min_sec(void) {
   datetime_t t;
   rtc_get_datetime(&t);

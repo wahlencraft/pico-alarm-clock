@@ -33,6 +33,8 @@ extern struct GlobBinder {
  * Monday is the first day of the week and Sunday is last. */
 int compare_datetimes(datetime_t *t1, datetime_t *t2);
 
+void deep_copy_time(datetime_t *t_source, datetime_t *t_target);
+
 void display_min_sec(void);
 
 void display_h_min(void);

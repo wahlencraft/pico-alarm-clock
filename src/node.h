@@ -22,19 +22,14 @@
 typedef struct Node {
   datetime_t *time;
   int song;
+  bool active;
   struct Node *next;
 } node_t;
 
-//extern node_t node_t;
-
 int node_test(void);
 
-/* Create a new node. */
-node_t *node_create();
-
-/* Add a new datetime item to the node. It will automatically be placed
- * cronologically. */
-int node_add(node_t *head, datetime_t *time, int song);
+/* Add a new node to the list. It will be placed cronologically. */
+int node_add(node_t **head, node_t *newNode);
 
 /* Find the first node with a time after `time`.
  *
@@ -45,7 +40,12 @@ int node_add(node_t *head, datetime_t *time, int song);
  *   NONE if list ends early.*/
 int node_get_next_from_time(datetime_t *time, node_t *head, node_t *nextNode);
 
-/* Return 1 if this array has no data. */
+/* Return true if node (alarm) is activated. */
+inline bool node_is_active(node_t *node) {
+  return node->active;
+}
+
+/* Return 1 if this array has no items. */
 int node_is_empty(node_t *head);
 
 void node_print_all(node_t *head);

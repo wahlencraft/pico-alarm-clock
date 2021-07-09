@@ -158,51 +158,36 @@ int main() {
   #define SETT_ALARM 3
   #define SETT_DONE 4
 
-  // Test alarm
-  datetime_t alarm_t = {
-    .year = 1970,
-    .month = 1,
-    .day = 1,
-    .dotw = 1, // 0 is Sunday
-    .hour = 0,
-    .min = 1,
-    .sec = 0
-  };
+  //// Test alarm
+  //datetime_t almTime = {
+  //  .year = 1970,
+  //  .month = 1,
+  //  .day = 1,
+  //  .dotw = 1, // 0 is Sunday
+  //  .hour = 8,
+  //  .min = 0,
+  //  .sec = 0
+  //};
 
-  //node_t *copy = node_create();
-  //add_alarm(&alarm_t, 0);
-  //alarm_t.min = 3;
-  //add_alarm(&alarm_t, 1);
-  //alarm_t.min = 5;
-  //add_alarm(&alarm_t, 2);
-  //alarm_t.min = 7;
-  //add_alarm(&alarm_t, 0);
-  //alarm_t.min = 10;
-  //add_alarm(&alarm_t, 1);
-  //alarm_t.min = 12;
-  //add_alarm(&alarm_t, 1);
-  //alarm_t.min = 14;
-  //add_alarm(&alarm_t, 1);
-
+  //// First alarm at Monday 08:00
+  //add_alarm(&almTime, 0, true);
+  //print_all_alarms();
+  //// Append alarm at Thursday 08:00
+  //almTime.dotw = 4;
+  //add_alarm(&almTime, 0, true);
+  //print_all_alarms();
+  //// Insert alarm at Monday 08:01
+  //almTime.dotw = 1;
+  //almTime.min = 1;
+  //add_alarm(&almTime, 0, true);
+  //print_all_alarms();
+  //// Insert berfore first at Monday 00:01
+  //almTime.hour = 0;
+  //add_alarm(&almTime, 1, true);
   //print_all_alarms();
 
-  //datetime_t time;
-  //get_next_alarm_time(&time, true);
-  //get_next_alarm_time(&time, false);
-  //printf("Remove alarm at ");
-  //print_time(&time, 0);
-  //node_t alm;
-  //remove_alarm(&time, &alm);
-  //printf("ALM:");
-  //node_print(&alm);
-
-  //alm.song = -3;
-  //alm.time->min = 6;
-  //add_alarm(alm.time, alm.song);
-  //printf("ALM (update)");
-  //node_print(&alm);
-  //print_all_alarms();
-
+  //return 1;
+  
   printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
@@ -226,6 +211,7 @@ int main() {
 #   ifdef NDEBUG
       printf("\n");
       print_current_time();
+      print_all_alarms();
 #   endif
     if (state->alarmMode) {
       rtc_disable_alarm();

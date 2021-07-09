@@ -74,9 +74,9 @@ void sound_test(void) {
   init_alarms();
 
   node_print_all(alarms);
-  add_alarm(&t1, 0);
-  add_alarm(&t2, 0);
-  add_alarm(&t3, 1);
+  add_alarm(&t1, 0, true);
+  add_alarm(&t2, 0, true);
+  add_alarm(&t3, 1, true);
   node_print_all(alarms);
   node_t *nextAlarm = malloc(sizeof(nextAlarm));
   if (is_alarm_in_1_min(nextAlarm)) {
@@ -106,7 +106,7 @@ void init_alarms() {
   pwm_set_wrap(slice_num, 31);
   pwm_set_chan_level(slice_num, channel, 15);
 
-  alarms = node_create(); // to store alarms
+  alarms = NULL; // to store alarms
   
   // Create songs
   static const note_t A = {.freq=TONE_A, .playDuration=300, .waitDuration=300};
@@ -161,6 +161,14 @@ void init_alarms() {
 
 static void drive_led_high(bool high) {
   gpio_put(LED_PIN, high);
+}
+
+void show_if_alarm_active(node_t *alarm) {
+  gpio_put(LED_PIN, alarm->active);
+}
+
+void led_clear() {
+  gpio_put(LED_PIN, false);
 }
 
 /*******************************************************************************
@@ -219,15 +227,24 @@ int64_t update_running_song(void) {
 /*******************************************************************************
  * Alarm functions
  ******************************************************************************/
-void add_alarm(datetime_t *time, int song) {
-  if (node_add(alarms, time, song)) {
+void add_alarm(datetime_t *time, int song, bool active) {
+  node_t *newAlarm = malloc(sizeof(node_t));
+  newAlarm->time = malloc(sizeof(datetime_t));
+  deep_copy_time(time, newAlarm->time);
+  newAlarm->song = song;
+  newAlarm->active = active;
+# ifdef NDEBUG
+  printf("Adding alarm:");
+  node_print(newAlarm);
+# endif
+  if (node_add(&alarms, newAlarm)) {
     // Failed to add. Datetime occupied.
     // TODO
     printf("Failed to add new alarm. There is already an alarm at this time.\n");
   }
 }
 
-int get_next_alarm_time(datetime_t *time, bool restart) {
+int get_next_alarm(node_t *alarm, bool restart) {
   static node_t *node = NULL;
   if (!is_alarms()) {
     return EXIT_FAILURE;
@@ -243,7 +260,9 @@ int get_next_alarm_time(datetime_t *time, bool restart) {
   } else {
     return EXIT_FAILURE;
   }
-  *time = *(node->time);
+  alarm->song = node->song;
+  alarm->active = node->active;
+  deep_copy_time(node->time, alarm->time);
   return EXIT_SUCCESS;
 }
 
@@ -264,6 +283,10 @@ bool is_alarm_in_1_min(node_t *nextNode) {
   if (node_get_next_from_time(&t_now, alarms, nextNode)) {
     // There is no next node
     DEBUG_PRINT(("There is no next alarm.\n"));
+    return false;
+  }
+  if (!(nextNode->active)) {
+    DEBUG_PRINT(("Next alarm disabled\n"));
     return false;
   }
   increment_datetime(&t_now, 1);

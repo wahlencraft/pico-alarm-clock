@@ -20,7 +20,7 @@ typedef enum {
   ALM_HOUR,
   ALM_MIN,
   ALM_SONG,
-  ALM_CONF,
+  ALM_ACTIVE,
   ALM_DONE,
   ALM_LEN
 } alm_t;
@@ -83,19 +83,26 @@ static void show_setting(
   }
 }
 
-static void show_alarm(int showAlarmState, int alarmIndex, bool updateLeft) {
+static void show_alarm(
+    int showAlarmState, 
+    int alarmIndex, 
+    node_t *alarm, 
+    bool updateLeft) {
   if (updateLeft) {
     TM1637_display_word("AL:", true);
   }
   switch (showAlarmState) {
     case C_ALM_ALM:
       TM1637_display_right(alarmIndex, false);
+      show_if_alarm_active(alarm);
       break;
     case C_ALM_NEW:
       TM1637_display_word("nEw", true);
+      led_clear();
       break;
     case C_ALM_DONE:
       TM1637_display_word("done", true);
+      led_clear();
       break;
   }
 }
@@ -295,7 +302,8 @@ int set_alarm_setting(const int setting) {
        case RIGHT_BUTTON:
          // Go into "choose alarm mode"
          ;
-         datetime_t alarmTime;
+         node_t alarm;
+         alarm.time = malloc(sizeof(datetime_t));
          c_alm_t chooseAlarmState = is_alarms() ? C_ALM_ALM : C_ALM_NEW;
          bool createNewAlarm = false;
          bool editAlarm = false;
@@ -305,34 +313,35 @@ int set_alarm_setting(const int setting) {
                DEBUG_PRINT(("Enter choose alarm: alarm\n"));
                int alarmIndex = 0;
                if (!createNewAlarm) {
-                get_next_alarm_time(&alarmTime, true);
+                get_next_alarm(&alarm, true);
                 // Show first alarm
-                show_alarm(C_ALM_ALM, alarmIndex, true);
+                show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
                 printf("Alarm %d at ", alarmIndex);
-                print_time(&alarmTime, 0);
+                print_time(alarm.time, 0);
                }
                while (chooseAlarmState == C_ALM_ALM) {
                  if (editAlarm || createNewAlarm) {
-                   node_t alarm;
                    alm_t setAlarmState = ALM_DOTW;
                    if (editAlarm) {
                      // get alarm from list, remove it
-                     remove_alarm(&alarmTime, &alarm);
+                     remove_alarm(alarm.time, &alarm);
                    } else if (createNewAlarm) {
                      // make a default alarm
-                     alarmTime.dotw = 1;
-                     alarmTime.hour = 0;
-                     alarmTime.min = 0;
-                     alarmTime.sec = 0;
-                     alarm.time = &alarmTime;
+                     alarm.time->dotw = 1;
+                     alarm.time->hour = 0;
+                     alarm.time->min = 0;
+                     alarm.time->sec = 0;
                      alarm.song = 0;
+                     alarm.active = true;
                    }
                    
                    // update display
-                   printf("  setAlarmState: %d\n", setAlarmState);
                    show_setting(setAlarmState, ALM, alarm.time, true);
-                   print_all_alarms();
-                   
+                   show_if_alarm_active(&alarm);
+#                  ifdef NDEBUG
+                     printf("  setAlarmState: %d\n", setAlarmState);
+                     print_all_alarms();
+#                  endif
                    while (editAlarm || createNewAlarm) {
                      button = fetch_button_with_irq_off();
                      switch (button) {
@@ -381,6 +390,7 @@ int set_alarm_setting(const int setting) {
                          /* Action
                           * - dotw, hour, min: Increment
                           * - song: Increment
+                          * - active: Toggle alarm active
                           * - done: Save and exit edit mode.
                           */
                          switch (setAlarmState) {
@@ -395,13 +405,19 @@ int set_alarm_setting(const int setting) {
                                  );
                              show_song(alarm.song, false);
                              break;
+                           case ALM_ACTIVE:
+                             printf("Active before: %d\n", alarm.active);
+                             toggle_alarm_active(&alarm);
+                             show_if_alarm_active(&alarm);
+                             printf("Active after: %d\n", alarm.active);
+                             break;
                            case ALM_DONE:
                              createNewAlarm = false;
                              editAlarm = false;
                              
                              // old node already removed, just add the edited
                              // verison to the list.
-                             add_alarm(alarm.time, alarm.song);
+                             add_alarm(alarm.time, alarm.song, alarm.active);
                              print_all_alarms();
 
                              // NOTE: Alarms will always come in cronological
@@ -409,12 +425,13 @@ int set_alarm_setting(const int setting) {
                              // after an edit.
 
                              // always restart menu
-                             get_next_alarm_time(&alarmTime, true);
+                             get_next_alarm(&alarm, true);
                              alarmIndex = 0;
 
                              // update display
                              printf("  setAlarmState: %d\n", setAlarmState);
-                             show_alarm(C_ALM_ALM, alarmIndex, true);
+                             show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
+
                              break;
                            default:
                              printf("ERROR in function %s: Right button unknown state\n",
@@ -434,14 +451,14 @@ int set_alarm_setting(const int setting) {
                    case LEFT_BUTTON:
                      // Go to next alarm, or if there is no more alarms
                      // go to "choose alarm: new".
-                     if (get_next_alarm_time(&alarmTime, false)) {
+                     if (get_next_alarm(&alarm, false)) {
                        // No next alarm found
                        chooseAlarmState++;
                      } else {
                        // Next alarm found. Show it.
-                       show_alarm(C_ALM_ALM, ++alarmIndex, false);
+                       show_alarm(C_ALM_ALM, ++alarmIndex, &alarm, false);
                        printf("Alarm %d at ", alarmIndex);
-                       print_time(&alarmTime, 0);
+                       print_time(alarm.time, 0);
                      }
                      break;
                    case MIDDLE_BUTTON:
@@ -459,39 +476,39 @@ int set_alarm_setting(const int setting) {
                            // cancel
                            DEBUG_PRINT(("    abort\n"));
                            removing = false;
-                           show_alarm(C_ALM_ALM, alarmIndex, true);
+                           show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
                            break;
                          case RIGHT_BUTTON:
 #                          ifdef NDEBUG
                              printf("  Removing alarm %d at", alarmIndex);
-                             print_time(&alarmTime, 1);
+                             print_time(alarm.time, 1);
 #                          endif
                            print_all_alarms();
                            removing = false;
-                           datetime_t timeCopy = alarmTime;
+                           datetime_t timeCopy = *(alarm.time);
                            // Remove current alarm, and go to next one
                            bool restart = (alarmIndex == 0) ? true : false;
                            if (alarmIndex != 0) {
-                             if (get_next_alarm_time(&alarmTime, false)) {
+                             if (get_next_alarm(&alarm, false)) {
                                // No next alarm, go to 'choose alarm: new' instead.
                                DEBUG_PRINT(("    No next alarm, go to choose alarm: new\n"));
                                chooseAlarmState++;
                              } else {
-                               show_alarm(C_ALM_ALM, ++alarmIndex, true);
+                               show_alarm(C_ALM_ALM, ++alarmIndex, &alarm, true);
                                printf("  Alarm %d at ", alarmIndex);
-                               print_time(&alarmTime, 0);
+                               print_time(alarm.time, 0);
                              }
                              remove_alarm(&timeCopy, NULL);
                              print_all_alarms();
                            } else {
                              // We need to do this differently when removing
                              // the first node.
-                             remove_alarm(&alarmTime, NULL);
-                             if (get_next_alarm_time(&alarmTime, true)) {
+                             remove_alarm(alarm.time, NULL);
+                             if (get_next_alarm(&alarm, true)) {
                                // No alarms left
                                chooseAlarmState++;
                              } else {
-                               show_alarm(C_ALM_ALM, ++alarmIndex, true);
+                               show_alarm(C_ALM_ALM, ++alarmIndex, &alarm, true);
                              }
                            }
                            break;
@@ -510,7 +527,7 @@ int set_alarm_setting(const int setting) {
                break;
              case C_ALM_NEW:
                DEBUG_PRINT(("Enter choose alarm: new\n"));
-               show_alarm(C_ALM_NEW, -1, false);
+               show_alarm(C_ALM_NEW, -1, NULL, false);
                while (chooseAlarmState == C_ALM_NEW) {
                  button = fetch_button_with_irq_off();
                  switch (button) {
@@ -529,7 +546,7 @@ int set_alarm_setting(const int setting) {
                break;
              case C_ALM_DONE:
                printf(("Enter choose alarm: done\n"));
-               show_alarm(C_ALM_DONE, -1, false);
+               show_alarm(C_ALM_DONE, -1, NULL, false);
                while (chooseAlarmState == C_ALM_DONE) {
                  button = fetch_button_with_irq_off();
                  switch (button) {
@@ -545,6 +562,7 @@ int set_alarm_setting(const int setting) {
                      break;
                    case RIGHT_BUTTON:
                      // Exit but stay in alarm setting
+                     free(alarm.time);
                      return setting;
                  }
                }
