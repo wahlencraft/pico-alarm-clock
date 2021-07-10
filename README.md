@@ -92,7 +92,9 @@ Editing an alarm works a lot like setting the clock. With some differences:
 - You can specify song. This is what sound the alarm will make. Use the
   R button to increment song and M button to listen to it (not yet
   implemented).
-- Activate: Not yet implemented
+- Activate: Toggle active status of this alarm. The LED will be on if the alarm
+  is on and off if the alarm is off. When creating a new alarm is is by default
+  on.
 
 Note that when exiting from `done`, you will always get to the first alarm 
 `AL: 0`. This is because the list of alarms will always be in chronological
@@ -101,6 +103,10 @@ order, and might need rearranging after an edit.
 To delete an alarm, navigate to it and press M. Then press R. To abort press
 any other button.
 ### The Alarms
-If there is any set alarms, they will fire at the specified time. When an alarm
-fires it will continue to make sound until any button is pressed to stop it.
+You can have an unlimited numbers of alarms. Every alarm has a time (specified
+by day of the week, hour and minute), a song (what tones will play when it
+fires) and an active status. To change these see [this section](#alarms).
+
+When an alarm fires it will play it's song and blink the LED. It will continue
+until any button is pressed to stop it.
 

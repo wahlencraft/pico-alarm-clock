@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+### Added
+- Enable/Disable alarms
+- LED support.
+  - LED blinks along with the sound when an alarm is firing.
+  - In alarm settings, LED indicate if alarm is disabled or enabled.
+
 ## [0.2.0] - 2021-06-24
 ### Added
 - Create, edit and remove alarms
