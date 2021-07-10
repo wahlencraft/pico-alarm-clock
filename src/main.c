@@ -169,6 +169,8 @@ int main() {
   //  .sec = 0
   //};
 
+  //datetime_t t_cpy;
+
   //// First alarm at Monday 08:00
   //add_alarm(&almTime, 0, true);
   //print_all_alarms();
@@ -184,6 +186,13 @@ int main() {
   //// Insert berfore first at Monday 00:01
   //almTime.hour = 0;
   //add_alarm(&almTime, 1, true);
+  //print_all_alarms();
+  //deep_copy_time(&almTime, &t_cpy);
+  //// Remove one alarm
+  //node_t alm;
+  //remove_alarm(&t_cpy, &alm);
+  //printf("Removed ");
+  //node_print(&alm);
   //print_all_alarms();
 
   //return 1;

@@ -108,34 +108,25 @@ int node_get_next_from_time(datetime_t *time, node_t *head, node_t *foundNode) {
   return EXIT_FAILURE;
 }
 
-// TODO. This needs to be rewritten.
-int node_remove(node_t *head, datetime_t *time, node_t *copy) {
-  if (compare_datetimes(head->time, time) == DATETIME_SAME) {
+int node_remove(node_t **head, datetime_t *time, node_t *copy) {
+  if (compare_datetimes((*head)->time, time) == DATETIME_SAME) {
     // Special case, removing head.
     DEBUG_PRINT(("Removing head\n"));
     if (copy != NULL) {
-      copy->time = head->time;
-      copy->song = head->song;
-      copy->active = head->active;
+      // Make the copy
+      deep_copy_time((*head)->time, copy->time);
+      copy->song = (*head)->song;
+      copy->active = (*head)->active;
       copy->next = NULL; // The copy is standalone and not in the linked list.
     }
-    if (head->next == NULL) {
-      // List will become empty
-      head->next = head;
-      return EXIT_SUCCESS;
-    } else {
-      // Change the content of head to be that of it's child, then remove child.
-      node_t *child = head->next;
-      head->time = child->time;
-      head->song = child->song;
-      head->active = child->active;
-      head->next = child->next;
-      free(child);
-      return EXIT_SUCCESS;
-    }
+    node_t *next = (*head)->next;
+    free(*head);
+    *head = next;
+    return EXIT_SUCCESS;
   }
-  node_t *last = head;
-  node_t *current = head->next;
+  
+  node_t *last = *head;
+  node_t *current = (*head)->next;
   while (true) {
     // Iterate over every node until the one with matching time is found. Then
     // delete it. The list is ordered, so if a later time is found, exit.

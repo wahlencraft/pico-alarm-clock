@@ -310,7 +310,7 @@ void print_all_alarms() {
 }
 
 void remove_alarm(datetime_t *time, node_t *copy) {
-  if (node_remove(alarms, time, copy)) {
+  if (node_remove(&alarms, time, copy)) {
     // Failed to remove alarm. Alarm did not exist. TODO.
 #   ifdef NDEBUG
       printf("  Tried to remove alarm, but alarm did not exist.\n");
