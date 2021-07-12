@@ -4,22 +4,22 @@
 /**
  * pins.h
  *
- * Define all the pin conections for the prototype.
+ * Define all the pin conections.
  **/
 
 // TM1637 7-segment display
-#define CLK_PIN 26
-#define DIO_PIN 27
+#define CLK_PIN 27
+#define DIO_PIN 26
 
  // Piezo buzzer
-#define BUZ_PIN 28
+#define BUZ_PIN 18 
 
 // Buttons
-#define RIGHT_BUTTON 21
-#define MIDDLE_BUTTON 20
-#define LEFT_BUTTON 19
+#define RIGHT_BUTTON 22
+#define MIDDLE_BUTTON 21
+#define LEFT_BUTTON 20
 
 // LED
-#define LED_PIN 22
+#define LED_PIN 25
 
 #endif // PINS_H_h
