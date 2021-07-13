@@ -108,5 +108,20 @@ by day of the week, hour and minute), a song (what tones will play when it
 fires) and an active status. To change these see [this section](#alarms).
 
 When an alarm fires it will play it's song and blink the LED. It will continue
-until any button is pressed to stop it.
+until any button is pressed to stop it or the max duration has passed (default
+5 minutes).
 
+## Making modifications
+If you want to make some modifications to the program i would recommend
+starting with these files.
+
+* [pins.h](src/pins.h): Here you can change what physical pin will have what
+  function. So if your prototype does not have the same connections as mine you
+  need to make changes here.
+* [timout_timer.h](src/timeout_timer.h): Here you will find `ALARM_TIMEOUT` 
+  which determines for how long an alarm should fire before turning off 
+  automatically.
+* [alarms.h:init](src/alarms.h): Here the songs (alarm sounds) are defined. You 
+  can edit, add and remove songs. Please note that what tones that resonates 
+  best depends on your buzzer, so this might be necessary if you have a very 
+  different one from mine.
