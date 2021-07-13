@@ -3,15 +3,15 @@
 ![image](images/showcase.jpg)
 ## Introduction
 This is an alarm clock that is running on Raspberry Pi Pico and is displaying
-on a TM1637 7-segment display. In this project I try to stay close to the 
-hardware and implement what I can from scratch. For example, I wrote my own 
+on a TM1637 7-segment display. In this project I try to stay close to the
+hardware and implement what I can from scratch. For example, I wrote my own
 library for the display and I use real hardware interrupts for button clicks and
 time based events.
 
 ## Dependencies
 * [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk): The
   standard library for working with Pico.
-* [Pico Extras](https://github.com/raspberrypi/pico-extras): Some additional 
+* [Pico Extras](https://github.com/raspberrypi/pico-extras): Some additional
   libraries. I needed this for putting the Pico in sleep mode.
 * [TM1637-pico](https://github.com/wahlencraft/TM1637-pico): My own library for
   writing to the 7-segment display.
@@ -40,7 +40,7 @@ If loading code over UART (from for example a Raspberry Pi) some unexpected
 behavior arises.
 
 The openocd reset command does not work with this code. I don't know why but a
-workaround is to remove that from the command. Load code with: 
+workaround is to remove that from the command. Load code with:
 `openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program src/alarm-clock.elf verify exit"`
 Then restart the Pico manually by using a reset switch or un- and re-plugging the
 power.
@@ -96,7 +96,7 @@ Editing an alarm works a lot like setting the clock. With some differences:
   is on and off if the alarm is off. When creating a new alarm is is by default
   on.
 
-Note that when exiting from `done`, you will always get to the first alarm 
+Note that when exiting from `done`, you will always get to the first alarm
 `AL: 0`. This is because the list of alarms will always be in chronological
 order, and might need rearranging after an edit.
 
@@ -108,5 +108,20 @@ by day of the week, hour and minute), a song (what tones will play when it
 fires) and an active status. To change these see [this section](#alarms).
 
 When an alarm fires it will play it's song and blink the LED. It will continue
-until any button is pressed to stop it.
+until any button is pressed to stop it or the max duration has passed (default
+5 minutes).
 
+## Making modifications
+If you want to make some modifications to the program i would recommend
+starting with these files.
+
+* [pins.h](src/pins.h): Here you can change what physical pin will have what
+  function. So if your prototype does not have the same connections as mine you
+  need to make changes here.
+* [timout_timer.h](src/timeout_timer.h): Here you will find `ALARM_TIMEOUT`
+  which determines for how long an alarm should fire before turning off
+  automatically.
+* [alarm.c:init_alarms()](src/alarm.c): Here the songs (alarm sounds) are
+  defined. You can edit, add and remove songs. Please note that what tones that
+  resonates best depends on your buzzer, so this might be necessary if you have
+  a very different one from mine.

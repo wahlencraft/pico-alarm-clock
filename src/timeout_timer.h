@@ -2,8 +2,7 @@
  * timeout_timer.h
  *
  * Start and check status of a timeout timer. This can be used to give
- * a max duration for the alarms so that they won't fire forever. The max alarm
- * time ALARM_TIMEOUT is defined in pins.h.
+ * a max duration for the alarms so that they won't fire forever.
  **/
 
 #ifndef TIMER_H_
