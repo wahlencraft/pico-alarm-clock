@@ -121,7 +121,7 @@ starting with these files.
 * [timout_timer.h](src/timeout_timer.h): Here you will find `ALARM_TIMEOUT` 
   which determines for how long an alarm should fire before turning off 
   automatically.
-* [alarms.h:init](src/alarms.h): Here the songs (alarm sounds) are defined. You 
+* [alarm.h:init](src/alarm.h): Here the songs (alarm sounds) are defined. You 
   can edit, add and remove songs. Please note that what tones that resonates 
   best depends on your buzzer, so this might be necessary if you have a very 
   different one from mine.
