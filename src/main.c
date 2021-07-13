@@ -23,6 +23,7 @@
 #include <settings.h>
 #include <node.h>
 #include <alarm.h>
+#include <timeout_timer.h>
 
 /*******************************************************************************
  * Globals
@@ -39,6 +40,7 @@ void fire_alarm(void) {
   uint32_t hz = clock_get_hz(clk_sys);
   printf("  Running at %f MHz\n", (float) hz/1000000);
   state->alarmMode = true;
+  start_alarm_timer();
 }
 
 void gpio_callback(uint gpio, uint32_t events) {
@@ -158,45 +160,16 @@ int main() {
   #define SETT_ALARM 3
   #define SETT_DONE 4
 
-  //// Test alarm
-  //datetime_t almTime = {
-  //  .year = 1970,
-  //  .month = 1,
-  //  .day = 1,
-  //  .dotw = 1, // 0 is Sunday
-  //  .hour = 8,
-  //  .min = 0,
-  //  .sec = 0
-  //};
-
-  //datetime_t t_cpy;
-
-  //// First alarm at Monday 08:00
-  //add_alarm(&almTime, 0, true);
-  //print_all_alarms();
-  //// Append alarm at Thursday 08:00
-  //almTime.dotw = 4;
-  //add_alarm(&almTime, 0, true);
-  //print_all_alarms();
-  //// Insert alarm at Monday 08:01
-  //almTime.dotw = 1;
-  //almTime.min = 1;
-  //add_alarm(&almTime, 0, true);
-  //print_all_alarms();
-  //// Insert berfore first at Monday 00:01
-  //almTime.hour = 0;
-  //add_alarm(&almTime, 1, true);
-  //print_all_alarms();
-  //deep_copy_time(&almTime, &t_cpy);
-  //// Remove one alarm
-  //node_t alm;
-  //remove_alarm(&t_cpy, &alm);
-  //printf("Removed ");
-  //node_print(&alm);
-  //print_all_alarms();
-
+  //start_alarm_timer();
+  //sleep_ms(1000);
+  //if (alarm_timeout()) {
+  //  printf("Timer is done\n");
+  //} else {
+  //  printf("Timer is not done\n");
+  //}
   //return 1;
-  
+
+
   printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
@@ -227,7 +200,13 @@ int main() {
       start_song(runningAlarm->song);
       alarm_id_t almID = add_alarm_in_us(0, alarm_callback, NULL, true);
       printf("Alarm %d started\n", almID);
-      while (state->alarmMode) {}
+      while (state->alarmMode) {
+        if (alarm_timeout()) {
+          state->alarmMode = false;
+          DEBUG_PRINT(("Alarm fired for too long. Turning off.\n"));
+          break;
+        }
+      }
       cancel_alarm(almID);
       stop_song();
     } else if (state->sleepMode) {
