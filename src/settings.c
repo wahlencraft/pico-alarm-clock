@@ -21,6 +21,7 @@ typedef enum {
   ALM_MIN,
   ALM_SONG,
   ALM_ACTIVE,
+  ALM_DELETE,
   ALM_DONE,
   ALM_LEN
 } alm_t;
@@ -50,9 +51,9 @@ static void show_setting(
     datetime_t *time,
     bool newState
   ){
-  char *labels[2][6] = {
-    "da:", "Hr:", "mi:", "SE:", "done",     "",
-    "da:", "Hr:", "mi:", "So:",  "Act", "done"
+  char *labels[2][7] = {
+    "da:", "Hr:", "mi:", "SE:", "done",    "",     "",
+    "da:", "Hr:", "mi:", "So:",  "Act", "dEL", "done"
   };
   // NOTE: 'So:' actually not needed since song has its own function. But
   // the spacer needs to be there for the others to get the right index.
@@ -84,9 +85,9 @@ static void show_setting(
 }
 
 static void show_alarm(
-    int showAlarmState, 
-    int alarmIndex, 
-    node_t *alarm, 
+    int showAlarmState,
+    int alarmIndex,
+    node_t *alarm,
     bool updateLeft) {
   if (updateLeft) {
     TM1637_display_word("AL:", true);
@@ -334,7 +335,7 @@ int set_alarm_setting(const int setting) {
                      alarm.song = 0;
                      alarm.active = true;
                    }
-                   
+
                    // update display
                    show_setting(setAlarmState, ALM, alarm.time, true);
                    show_if_alarm_active(&alarm);
@@ -351,9 +352,9 @@ int set_alarm_setting(const int setting) {
                        case LEFT_BUTTON:
                          /* Go to next alarm setting
                           *
-                          * dotw -> hour -> min -> song -> confirm -> done
-                          *   ^                                         |
-                          *   |_________________________________________|
+                          * dotw -> hour -> min -> song -> activate -> delete -> done
+                          *   ^                                                   |
+                          *   |___________________________________________________|
                           */
                          setAlarmState = (setAlarmState + 1) % ALM_LEN;
                          printf("  setAlarmState: %d\n", setAlarmState);
@@ -370,7 +371,7 @@ int set_alarm_setting(const int setting) {
                          /* Action
                           * - dotw, hour, min: Decrement
                           * - song: Play TODO
-                          * - done: Do nothing
+                          * - activate, delete, done: Do nothing
                           */
                          switch (setAlarmState) {
                            case ALM_DOTW ... ALM_MIN:
@@ -391,6 +392,7 @@ int set_alarm_setting(const int setting) {
                           * - dotw, hour, min: Increment
                           * - song: Increment
                           * - active: Toggle alarm active
+                          * - delete: Exit without saving.
                           * - done: Save and exit edit mode.
                           */
                          switch (setAlarmState) {
@@ -411,10 +413,45 @@ int set_alarm_setting(const int setting) {
                              show_if_alarm_active(&alarm);
                              printf("Active after: %d\n", alarm.active);
                              break;
+                           case ALM_DELETE:
+                             TM1637_display_word("Conf", true);
+                             DEBUG_PRINT(("  Remove alarm?\n"));
+                             bool removing = true;
+                             while (removing) {
+                               button = fetch_button_with_irq_off();
+                               switch (button) {
+                                 case 0:
+                                   break;
+                                 case LEFT_BUTTON:
+                                 case MIDDLE_BUTTON:
+                                   // cancel
+                                   DEBUG_PRINT(("    abort\n"));
+                                   removing = false;
+                                   show_setting(setAlarmState, ALM, alarm.time, true);
+                                   break;
+                                 case RIGHT_BUTTON:
+                                   // Remove alarm (exit without saving)
+                                   DEBUG_PRINT(("    Removed alarm while editing\n"));
+                                   createNewAlarm = false;
+                                   editAlarm = false;
+                                   removing = false;
+
+                                   // Restart menu
+                                   if (is_alarms()) {
+                                     get_next_alarm(&alarm, true);
+                                     alarmIndex = 0;
+                                     show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
+                                   } else {
+                                     chooseAlarmState = C_ALM_NEW;
+                                   }
+                                   break;
+                               }
+                             }
+                             break;
                            case ALM_DONE:
                              createNewAlarm = false;
                              editAlarm = false;
-                             
+
                              // old node already removed, just add the edited
                              // verison to the list.
                              add_alarm(alarm.time, alarm.song, alarm.active);
@@ -442,8 +479,10 @@ int set_alarm_setting(const int setting) {
                          printf("ERROR: SET_ALARM\n");
                      }
                    }
+                   // In case something changed in this block, restart.
+                   continue;
                  }
-                 
+
                  button = fetch_button_with_irq_off();
                  switch (button) {
                    case 0:
@@ -538,7 +577,7 @@ int set_alarm_setting(const int setting) {
                    case RIGHT_BUTTON:
                      // Create new alarm
                      printf("  Create new alarm\n");
-                     createNewAlarm = true; 
+                     createNewAlarm = true;
                      chooseAlarmState = C_ALM_ALM;
                      break;
                  }
