@@ -89,12 +89,14 @@ To edit an existing alarm, navigate to `AL: x` and press R.
 
 Editing an alarm works a lot like setting the clock. With some differences:
 - You can not specify seconds
-- You can specify song. This is what sound the alarm will make. Use the
+- Song (`So`). This is what sound the alarm will make. Use the
   R button to increment song and M button to listen to it (not yet
   implemented).
-- Activate: Toggle active status of this alarm. The LED will be on if the alarm
-  is on and off if the alarm is off. When creating a new alarm is is by default
-  on.
+- Activate (`Act`): Toggle active status of this alarm. The LED will be on if
+  the alarm is on and off if the alarm is off. When creating a new alarm is it
+  by default on.
+- Delete (`dEL`): Exit and delete the current alarm. Confirm deletion with R,
+  abort with L or M.
 
 Note that when exiting from `done`, you will always get to the first alarm
 `AL: 0`. This is because the list of alarms will always be in chronological

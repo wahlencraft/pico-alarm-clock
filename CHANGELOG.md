@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+### Added
+- You can now delete an alarm directly from the alarm edit menu.
+### Changed
+- There is now a max duration for alarms (5 minutes).
+
 ## [0.3.0] - 2021-07-10
 ### Added
 - Enable/Disable alarms
