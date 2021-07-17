@@ -35,7 +35,7 @@ volatile struct GlobBinder *state;  // Binder for all states in the global state
  * Functions
  ******************************************************************************/
 
-void fire_alarm(void) {
+static void fire_alarm(void) {
   printf("START NEW ALARM\n");
   uint32_t hz = clock_get_hz(clk_sys);
   printf("  Running at %f MHz\n", (float) hz/1000000);
@@ -43,7 +43,7 @@ void fire_alarm(void) {
   start_alarm_timer();
 }
 
-void gpio_callback(uint gpio, uint32_t events) {
+static void gpio_callback(uint gpio, uint32_t events) {
   DEBUG_PRINT(("Interrupted by GPIO %d\n", gpio));
   DEBUG_PRINT(("  alarmMode: %d, sleepMode: %d, buttonBuffer: %d\n",
       state->alarmMode, state->sleepMode, state->buttonBuffer));
@@ -58,7 +58,7 @@ void gpio_callback(uint gpio, uint32_t events) {
       state->alarmMode, state->sleepMode, state->buttonBuffer));
 }
 
-int64_t alarm_callback(alarm_id_t id, void *user_data) {
+static int64_t alarm_callback(alarm_id_t id, void *user_data) {
   DEBUG_PRINT(("alarm_callback: Timer %d fired! ", (int) id));
   display_h_min();
   int64_t nextCallback = update_running_song();
@@ -67,7 +67,7 @@ int64_t alarm_callback(alarm_id_t id, void *user_data) {
   return nextCallback*1000;
 }
 
-void setup_button(int gpio) {
+static void setup_button(int gpio) {
   gpio_pull_up(gpio);
   gpio_set_irq_enabled_with_callback(
       gpio,
@@ -78,7 +78,7 @@ void setup_button(int gpio) {
 }
 
 /* Put cpu to sleep until next minute. Then display time. */
-void sleep_to_next_min() {
+static void sleep_to_next_min() {
   // Set next wakeup
   datetime_t time = {
     .year = -1,
@@ -160,16 +160,6 @@ int main() {
   #define SETT_ALARM 3
   #define SETT_DONE 4
 
-  //start_alarm_timer();
-  //sleep_ms(1000);
-  //if (alarm_timeout()) {
-  //  printf("Timer is done\n");
-  //} else {
-  //  printf("Timer is not done\n");
-  //}
-  //return 1;
-
-
   printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
@@ -185,8 +175,6 @@ int main() {
   // else if sleepMode:
   //    if "alarm in 1 min" -> sleep_to_next_alarm
   //    else -> sleep_to_next_min
-  // else if "alarm now":  TODO
-  //    fire_alarm
   // else: (button interupt)
   //    open settings menu
   while (true) {
