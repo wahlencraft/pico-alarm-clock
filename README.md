@@ -90,8 +90,7 @@ To edit an existing alarm, navigate to `AL: x` and press R.
 Editing an alarm works a lot like setting the clock. With some differences:
 - You can not specify seconds
 - Song (`So`). This is what sound the alarm will make. Use the
-  R button to increment song and M button to listen to it (not yet
-  implemented).
+  R button to increment song and M button to listen to it.
 - Activate (`Act`): Toggle active status of this alarm. The LED will be on if
   the alarm is on and off if the alarm is off. When creating a new alarm is it
   by default on.

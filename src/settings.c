@@ -45,6 +45,14 @@ static int fetch_button_with_irq_off(void) {
   return button;
 }
 
+static int64_t alarm_callback(alarm_id_t id, void *user_data) {
+  DEBUG_PRINT(("alarm_callback: Timer %d fired! ", (int) id));
+  int64_t nextCallback = update_running_song();
+  DEBUG_PRINT(("Again in %lld ms\n", nextCallback));
+  // Can return a value here in us to fire in the future
+  return nextCallback*1000;
+}
+
 static void show_setting(
     int settingState,
     int setting,
@@ -343,6 +351,8 @@ int set_alarm_setting(const int setting) {
                      printf("  setAlarmState: %d\n", setAlarmState);
                      print_all_alarms();
 #                  endif
+                   bool playSongDemo = false;
+                   alarm_id_t songID;
                    while (editAlarm || createNewAlarm) {
                      button = fetch_button_with_irq_off();
                      switch (button) {
@@ -356,6 +366,14 @@ int set_alarm_setting(const int setting) {
                           *   ^                                                   |
                           *   |___________________________________________________|
                           */
+                         // If playing a song demo, stop it.
+                         if (playSongDemo) {
+                           playSongDemo = false;
+                           cancel_alarm(songID);
+                           stop_song();
+                           show_if_alarm_active(&alarm);
+                         }
+
                          setAlarmState = (setAlarmState + 1) % ALM_LEN;
                          printf("  setAlarmState: %d\n", setAlarmState);
                          // update display
@@ -370,7 +388,7 @@ int set_alarm_setting(const int setting) {
                        case MIDDLE_BUTTON:
                          /* Action
                           * - dotw, hour, min: Decrement
-                          * - song: Play TODO
+                          * - song: Play/stop demo
                           * - activate, delete, done: Do nothing
                           */
                          switch (setAlarmState) {
@@ -379,7 +397,20 @@ int set_alarm_setting(const int setting) {
                              show_setting(setAlarmState, ALM, alarm.time, false);
                              break;
                            case ALM_SONG:
+                             // Play current song. Play untill pressed again,
+                             // other song selected or other setting selected.
+                             playSongDemo = !playSongDemo;
+                             if (playSongDemo) {
+                               start_song(alarm.song);
+                               songID = add_alarm_in_us(0, alarm_callback, NULL, true);
+                             } else {
+                               cancel_alarm(songID);
+                               stop_song();
+                               show_if_alarm_active(&alarm);
+                             }
                              break;
+                           case ALM_ACTIVE:
+                           case ALM_DELETE:
                            case ALM_DONE:
                              break;
                            default:
@@ -406,6 +437,13 @@ int set_alarm_setting(const int setting) {
                                  get_number_of_songs()
                                  );
                              show_song(alarm.song, false);
+                             if (playSongDemo) {
+                               // If playing demo, stop it and start a new demo.
+                               cancel_alarm(songID);
+                               stop_song();
+                               start_song(alarm.song);
+                               songID = add_alarm_in_us(0, alarm_callback, NULL, true);
+                             }
                              break;
                            case ALM_ACTIVE:
                              printf("Active before: %d\n", alarm.active);
