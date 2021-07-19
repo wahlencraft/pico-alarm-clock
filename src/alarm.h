@@ -20,6 +20,7 @@
 #include <hardware/pwm.h>
 #include <PicoTM1637.h>
 
+#include <song_deff.h>
 #include <pins.h>
 #include <node.h>
 

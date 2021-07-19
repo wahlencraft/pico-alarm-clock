@@ -3,19 +3,8 @@
 /*******************************************************************************
  *  Typedefs
  ******************************************************************************/
-typedef const struct Note {
-  int freq;
-  int playDuration;
-  int waitDuration;
-} note_t;
-
-typedef struct Song {
-  note_t **notes;
-  int len;
-} song_t;
-
 typedef struct SongState {
-  int num;    // what song is it (from songList)
+  note_t **start;  // Pointer to pointer of start of song
   int index;  // what tone (index) should be played?
   int phase;  // 0: play phase, 1: wait phase
 } song_state_t;
@@ -23,21 +12,8 @@ typedef struct SongState {
 /*******************************************************************************
  * Globals
  ******************************************************************************/
-#define SONGS 3
-
-enum Tones {
-  TONE_CM = 262,
-  TONE_D = 294,
-  TONE_E = 330,
-  TONE_F = 349,
-  TONE_G = 392,
-  TONE_A = 440,
-  TONE_B = 498,
-  TONE_C = 523
-};
-
 node_t *alarms;
-static song_t *songList[SONGS];
+static note_t ***songs;
 static volatile song_state_t songState;
 
 /*******************************************************************************
@@ -105,60 +81,50 @@ void init_alarms() {
   uint channel = pwm_gpio_to_channel(BUZ_PIN);
   pwm_set_wrap(slice_num, 31);
   pwm_set_chan_level(slice_num, channel, 15);
-
-  alarms = NULL; // to store alarms
   
-  // Create songs
-  static const note_t A = {.freq=TONE_A, .playDuration=300, .waitDuration=300};
-  static const note_t B = {.freq=TONE_B, .playDuration=300, .waitDuration=300};
-  static const note_t C = {.freq=TONE_C, .playDuration=300, .waitDuration=200};
-  static const note_t D = {.freq=TONE_D, .playDuration=300, .waitDuration=300};
-  static const note_t E = {.freq=TONE_E, .playDuration=300, .waitDuration=300};
-  static const note_t F = {.freq=TONE_F, .playDuration=300, .waitDuration=300};
-  static const note_t G = {.freq=TONE_G, .playDuration=300, .waitDuration=200};
-  static const note_t G_long = {.freq=TONE_G, .playDuration=500, .waitDuration=300};
-  static const note_t C_long = {.freq=TONE_C, .playDuration=500, .waitDuration=300};
-
-  printf(" A = %d Hz [0x%x]\n C = %d Hz [0x%x]\n D = %d Hz [0x%x]\n G = %d Hz [0x%x]\n",
-      A.freq, &A, C.freq, &C, D.freq, &D, G.freq, &G);
-  
-  #define len0 4
-  static note_t *arr0[len0] = {&A, &A, &A, &A};
-
-  #define len1 8
-  static note_t *arr1[len1] = {&C, &C, &C, &C, &G, &G, &G, &G};
-  
-  #define len2 8
-  static note_t *arr2[len2] = {&D, &D, &D, &D, &D, &D, &D, &D};
-  
-  for (int i=0; i<SONGS; i++) {
-    songList[i] = (song_t *) malloc(sizeof(song_t));
+  printf("Print notes\n");
+  for (int i=0; i<11; i++) {
+    printf("0x%x ", allNotes[i]);
   }
-  songList[0]->notes = arr0;
-  songList[0]->len = len0;
+  printf("\n");
+
+  int index = 0;
   
-  songList[1]->notes = arr1;
-  songList[1]->len = len1;
+  // Allocate
+  songs = malloc(sizeof(note_t**)*SONGS);
+  printf("songs: 0x%x\n  ", songs);
+  for (int song=0; song<SONGS; song++) {
+    printf("songs[%d]: 0x%x  ", song, songs[song]);
+  }
+  printf("\n");
 
-  songList[2]->notes = arr2;
-  songList[2]->len = len2;
+  for (int song=0; song<SONGS; song++) {
+    songs[song] = &allNotes[index];
+    while (allNotes[++index] != NULL) {}
+    index++;
+  }
+  printf("songs: 0x%x\n  ", songs);
+  for (int song=0; song<SONGS; song++) {
+    printf("songs[%d]: 0x%x  ", song, songs[song]);
+  }
+  printf("\n");
 
-  printf("songList contents:\n");
-  for (int i=0; i<SONGS; i++) {
-    note_t **notes = songList[i]->notes;
-    printf("  songList[%d]: 0x%x\n", i, songList[i]);
-    for (int j=0; j<songList[i]->len; j++) { 
-      note_t *note = *(notes+j);
-      printf("    0x%x: 0x%x->%d\n", notes+j, 
-          note, note->freq);
-    }
+  printf("Print songs (%d)\n", SONGS);
+  for (int song=0; song<SONGS; song++) {
+    note_t *note = *songs[song];
+    int i = 1;
+    do {
+      printf(" |0x%x %d %d/%d|", note, note->freq, note->playDuration, note->waitDuration);
+      note = *(songs[song] + i++);
+    } while (note != NULL);
+    printf("\n");
   }
 }
+
 
 /*******************************************************************************
  * LED functions
  ******************************************************************************/
-
 static void drive_led_high(bool high) {
   gpio_put(LED_PIN, high);
 }
@@ -179,7 +145,7 @@ int get_number_of_songs() {
 }
 
 void start_song(int songNum) {
-  songState.num = songNum;
+  songState.start = songs[songNum];
   songState.index = 0;
   songState.phase = 0;
 }
@@ -193,13 +159,13 @@ void stop_song() {
 int64_t update_running_song(void) {
   // For every note this function is called twice.
   // What is done depends on the contents of the global struct songState
-  //  songState.num: The song to play (from songList). Is constant for a song.
+  //  songState.start: Pointer to pointer of first note in song.
   //  songState.index: What note that is playing.
   //  songState.phase: Phase for note (0 or 1).
   //    0. Play sound, return playDuration.
   //    1. Silent, return waitDuration.
   //note_t **notes = songList[songState.num]->notes;
-  note_t *note = *(songList[songState.num]->notes + songState.index);
+  note_t *note = *(songState.start + songState.index);
   printf("songState: %d\n", songState.index);
   int64_t retval;
   uint32_t sysFreq = clock_get_hz(clk_sys);
@@ -215,7 +181,7 @@ int64_t update_running_song(void) {
     // phase 1
     pwm_set_enabled(slice_num, false);
     printf("  Silent for %d ms\n", note->waitDuration);
-    songState.index = (songState.index == songList[songState.num]->len - 1) ? 
+    songState.index = (*(songState.start+songState.index+1) == NULL) ? 
       0 : songState.index + 1;
     songState.phase = 0;
     retval = note->waitDuration;
@@ -223,7 +189,6 @@ int64_t update_running_song(void) {
   }
   return retval;
 }
-
 /*******************************************************************************
  * Alarm functions
  ******************************************************************************/
