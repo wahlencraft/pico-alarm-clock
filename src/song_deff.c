@@ -1,37 +1,41 @@
 #include <song_deff.h>
 
 enum Tones {
-  TONE_CM = 262,
   TONE_D = 294,
   TONE_E = 330,
   TONE_F = 349,
-  TONE_G = 392,
-  TONE_A = 440,
-  TONE_B = 498,
-  TONE_C = 523
+  TONE_A4 = 440,
+  TONE_C = 523,
+  TONE_A7 = 3520,
+  TONE_B5 = 988,
+  TONE_C6 = 1047,
+  TONE_D5 = 587,
+  TONE_E5 = 659,
+  TONE_F5 = 698,
+  TONE_G5 = 784
 };
 
 // Definition of notes.
-static const note_t A = {.freq=TONE_A, .playDuration=300, .waitDuration=300};
-static const note_t B = {.freq=TONE_B, .playDuration=300, .waitDuration=300};
-static const note_t C = {.freq=TONE_C, .playDuration=300, .waitDuration=200};
-static const note_t D = {.freq=TONE_D, .playDuration=300, .waitDuration=300};
-static const note_t E = {.freq=TONE_E, .playDuration=300, .waitDuration=300};
-static const note_t F = {.freq=TONE_F, .playDuration=300, .waitDuration=300};
-static const note_t G = {.freq=TONE_G, .playDuration=300, .waitDuration=200};
-static const note_t G_long = {.freq=TONE_G, .playDuration=500, .waitDuration=300};
-static const note_t C_long = {.freq=TONE_C, .playDuration=500, .waitDuration=300};
-
-// Number of songs. It's important to update this if songDeff is changed.
-const int SONGS = 4;
+static const note_t A4 = {.freq=440, .playDuration=300, .waitDuration=300};
+static const note_t B5 = {.freq=988, .playDuration=300, .waitDuration=300};
+static const note_t C5 = {.freq=523, .playDuration=300, .waitDuration=300};
+static const note_t D4 = {.freq=294, .playDuration=300, .waitDuration=300};
+static const note_t E6 = {.freq=1319, .playDuration=300, .waitDuration=300};
+static const note_t F4 = {.freq=349, .playDuration=300, .waitDuration=300};
+static const note_t F6 = {.freq=1397, .playDuration=300, .waitDuration=300};
+static const note_t G6 = {.freq=1568, .playDuration=300, .waitDuration=300};
 
 // Devinition of songs. Every song can have an arbitrary amount of notes. Songs
 // are seperated by NULL values.
-note_t *songDeff[] = {  
-  &A, &A, &A, NULL,     
-  &B, NULL,
-  &C, &C, &C, &C, NULL,
-  &A, &B, &C, NULL
+note_t *songDeff[] = {
+  &A4, NULL,
+  &B5, NULL,
+  &C5, NULL,
+  &D4, NULL,
+  &E6, NULL,
+  &F4, NULL,
+  &F6, NULL,
+  &G6, NULL
 };
 
 int get_num_of_songs() {
