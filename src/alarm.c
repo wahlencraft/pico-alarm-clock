@@ -15,6 +15,7 @@ typedef struct SongState {
 node_t *alarms;
 static note_t ***songs;
 static volatile song_state_t songState;
+int SONGS;
 
 /*******************************************************************************
  * Tests and initialization
@@ -91,6 +92,8 @@ void init_alarms() {
   int index = 0;
   
   // Allocate
+  SONGS = get_num_of_songs();
+  DEBUG_PRINT(("Found %d songs\n", SONGS);)
   songs = malloc(sizeof(note_t**)*SONGS);
   printf("songs: 0x%x\n  ", songs);
   for (int song=0; song<SONGS; song++) {

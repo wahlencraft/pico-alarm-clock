@@ -34,4 +34,14 @@ note_t *songDeff[] = {
   &A, &B, &C, NULL
 };
 
+int get_num_of_songs() {
+  int count = 0;
+  for (int i=0; i<sizeof(songDeff)/sizeof(note_t*); i++) {
+    if (songDeff[i] == NULL) {
+      count++;
+    }
+  }
+  return count;
+}
+
 note_t **allNotes = songDeff;

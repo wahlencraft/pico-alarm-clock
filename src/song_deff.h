@@ -14,15 +14,8 @@ typedef const struct Note {
   int waitDuration;
 } note_t;
 
-//typedef struct Song {
-//  note_t **notes;
-//  int len;
-//} song_t;
-
-const int SONGS;
-
 note_t **allNotes;
 
-//void alloc_songs(song_t **songList);
+int get_num_of_songs();
 
 #endif //SONG_DEFF_H_
