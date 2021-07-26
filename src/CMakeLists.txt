@@ -1,7 +1,7 @@
 add_executable(alarm-clock)
 
 target_sources(alarm-clock PRIVATE 
-  main.c settings.c helpers.c alarm.c node.c timeout_timer.c song_deff.c
+  main.c settings.c helpers.c alarm.c node.c timeout_timer.c song_def.c
   )
 
 target_include_directories(alarm-clock PRIVATE ${CMAKE_CURRENT_LIST_DIR})
