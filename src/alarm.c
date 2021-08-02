@@ -195,7 +195,7 @@ int64_t update_running_song(void) {
 /*******************************************************************************
  * Alarm functions
  ******************************************************************************/
-void add_alarm(datetime_t *time, int song, bool active) {
+int add_alarm(datetime_t *time, int song, bool active) {
   node_t *newAlarm = malloc(sizeof(node_t));
   newAlarm->time = malloc(sizeof(datetime_t));
   deep_copy_time(time, newAlarm->time);
@@ -207,9 +207,10 @@ void add_alarm(datetime_t *time, int song, bool active) {
 # endif
   if (node_add(&alarms, newAlarm)) {
     // Failed to add. Datetime occupied.
-    // TODO
-    printf("Failed to add new alarm. There is already an alarm at this time.\n");
+    DEBUG_PRINT(("Failed to add new alarm. There is already an alarm at this time.\n"));
+    return EXIT_FAILURE;
   }
+  return EXIT_SUCCESS;
 }
 
 int get_next_alarm(node_t *alarm, bool restart) {

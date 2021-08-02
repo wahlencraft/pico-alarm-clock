@@ -96,10 +96,11 @@ Editing an alarm works a lot like setting the clock. With some differences:
   by default on.
 - Delete (`dEL`): Exit and delete the current alarm. Confirm deletion with R,
   abort with L or M.
+- Done (`done`): Will fail if there already is an alarm with the same time.
 
 Note that when exiting from `done`, you will always get to the first alarm
 `AL: 0`. This is because the list of alarms will always be in chronological
-order, and might need rearranging after an edit.
+order, and might need rearrangement after an edit.
 
 To delete an alarm, navigate to it and press M. Then press R. To abort press
 any other button.

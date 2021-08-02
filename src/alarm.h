@@ -47,12 +47,15 @@ void led_clear();
 
 /* Add a new alarm.
  *
+ * The alarm will be put in a list of alarm sorted after the time of the alarm.
+ * Returns EXIT_FAILURE if there already is an alarm at this time.
+ *
  * - @param *time: The datetime for when the alarm should fire. Only dotw,
  *   hour, min and sec are important.
  * - @param song: The song that should be played when the alarm fires. The
  *   argument is an index in the songList array defined in `init_alarms`. 
  * - @param active: If the alarm is activated of not. */
-void add_alarm(datetime_t *time, int song, bool active);
+int add_alarm(datetime_t *time, int song, bool active);
 
 /* Light led if alarm is active, otherwise turn it off. */
 void show_if_alarm_active(node_t *alarm);

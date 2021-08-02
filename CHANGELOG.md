@@ -3,9 +3,12 @@
 ## Unreleased
 ### Added
 - You can now delete an alarm directly from the alarm edit menu.
-- You can now listhen to a song directly from the alarm edit menu.
+- You can now listen to a song directly from the alarm edit menu.
+- New songs.
 ### Changed
 - There is now a max duration for alarms (5 minutes).
+- If attempting to add an alarm which collides with an already existing alarm,
+  it will fail, and the display will blink.
 
 ## [0.3.0] - 2021-07-10
 ### Added

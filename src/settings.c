@@ -487,26 +487,32 @@ int set_alarm_setting(const int setting) {
                              }
                              break;
                            case ALM_DONE:
-                             createNewAlarm = false;
-                             editAlarm = false;
-
                              // old node already removed, just add the edited
                              // verison to the list.
-                             add_alarm(alarm.time, alarm.song, alarm.active);
-                             print_all_alarms();
+                             if (!add_alarm(alarm.time, alarm.song, alarm.active)) {
+                               print_all_alarms();
+                               
+                               createNewAlarm = false;
+                               editAlarm = false;
 
-                             // NOTE: Alarms will always come in cronological
-                             // order. So the alarm might move in the list
-                             // after an edit.
+                               // NOTE: Alarms will always come in cronological
+                               // order. So the alarm might move in the list
+                               // after an edit.
 
-                             // always restart menu
-                             get_next_alarm(&alarm, true);
-                             alarmIndex = 0;
+                               // always restart menu
+                               get_next_alarm(&alarm, true);
+                               alarmIndex = 0;
 
-                             // update display
-                             printf("  setAlarmState: %d\n", setAlarmState);
-                             show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
-
+                               // update display
+                               printf("  setAlarmState: %d\n", setAlarmState);
+                               show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
+                             } else {
+                               // Failed to add alarm. Flash the display to
+                               // notice the user.
+                               TM1637_clear();
+                               busy_wait_us(300000);
+                               show_setting(setAlarmState, ALM, alarm.time, false);
+                             }
                              break;
                            default:
                              printf("ERROR in function %s: Right button unknown state\n",

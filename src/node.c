@@ -35,7 +35,7 @@ int node_add(node_t **head, node_t *newNode) {
     DEBUG_PRINT(("List empty, adding first item\n"));
     *head = newNode;
     newNode->next = NULL;
-    return 0;
+    return EXIT_SUCCESS;
     }
   int compCode = compare_datetimes((*head)->time, newNode->time);
   switch (compCode) {
@@ -43,14 +43,14 @@ int node_add(node_t **head, node_t *newNode) {
       // Singular case. The new node is first
       newNode->next = *head;
       *head = newNode;
-      return 0;
+      return EXIT_SUCCESS;
     case DATETIME_SAME:
       DEBUG_PRINT(("WARNING: New node at same time as head\n"));
       DEBUG_PRINT(("  New:"));
       node_print(newNode);
       DEBUG_PRINT(("  Head:"));
       node_print(*head);
-      return 1;
+      return EXIT_FAILURE;
   }
   node_t *last = *head;
   node_t *current = (*head)->next;
@@ -66,23 +66,24 @@ int node_add(node_t **head, node_t *newNode) {
         DEBUG_PRINT(("WARNING: New node at same time as other ("));
         print_time(newNode->time, 1);
         DEBUG_PRINT((") \n"));
-        return 1;
+        return EXIT_FAILURE;
       case DATETIME_AFTER:
         // Insert in list
         DEBUG_PRINT(("inserting\n"));
         last->next = newNode;
         newNode->next = current;
-        return 0;
+        return EXIT_SUCCESS;
       default:
         printf("ERROR in function %s at line %d: impossible compCode\n",
             __func__, __LINE__);
-        return 1;
+        return EXIT_FAILURE;
     }
   }
   // Run out of list. Append at end
   DEBUG_PRINT(("Appending\n"));
   last->next = newNode;
   newNode->next = NULL;
+  return EXIT_SUCCESS;
 }
 
 int node_get_next_from_time(datetime_t *time, node_t *head, node_t *foundNode) {
