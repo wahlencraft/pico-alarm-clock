@@ -26,8 +26,6 @@ typedef struct Node {
   struct Node *next;
 } node_t;
 
-int node_test(void);
-
 /* Add a new node to the list. It will be placed cronologically. */
 int node_add(node_t **head, node_t *newNode);
 
@@ -48,9 +46,11 @@ inline bool node_is_active(node_t *node) {
 /* Return 1 if this array has no items. */
 int node_is_empty(node_t *head);
 
+/* Print all nodes.*/
 void node_print_all(node_t *head);
 
-void node_print(node_t *node);
+/* Print one node. Indent is spaces before print. */
+void node_print(node_t *node, int indent);
 
 /* Remove the node with datetime @param time. 
  *

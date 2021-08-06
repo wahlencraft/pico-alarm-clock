@@ -18,58 +18,11 @@ static volatile song_state_t songState;
 int SONGS;
 
 /*******************************************************************************
- * Tests and initialization
+ * Initialization
  ******************************************************************************/
-void sound_test(void) {
-  datetime_t t1 = {
-    .year = 1970,
-    .month = 1,
-    .day = 1,
-    .dotw = 1, // 0 is Sunday
-    .hour = 0,
-    .min = 1,
-    .sec = -1
-  };
-  datetime_t t2 = {
-    .year = -1,
-    .month = -1,
-    .day = -1,
-    .dotw = 1, // 0 is Sunday
-    .hour = 17,
-    .min = -1,
-    .sec = 0
-  };
-  datetime_t t3 = {
-    .year = -1,
-    .month = -1,
-    .day = -1,
-    .dotw = 1, // 0 is Sunday
-    .hour = 17,
-    .min = 20,
-    .sec = 0
-  };
-  init_alarms();
-
-  node_print_all(alarms);
-  add_alarm(&t1, 0, true);
-  add_alarm(&t2, 0, true);
-  add_alarm(&t3, 1, true);
-  node_print_all(alarms);
-  node_t *nextAlarm = malloc(sizeof(nextAlarm));
-  if (is_alarm_in_1_min(nextAlarm)) {
-    printf("True\n");
-    printf("Found node ");
-    node_print(nextAlarm);
-  } else {
-    printf("False\n");
-  }
-  free(nextAlarm);
-  remove_alarm(&t1, NULL);
-  node_print_all(alarms);
-}
 
 void init_alarms() {
-  DEBUG_PRINT(("INIT ALARMS\n"));
+  DEBUG_PRINT(("\nINIT ALARMS\n"));
   // LED
   gpio_init(LED_PIN);
   gpio_set_dir(LED_PIN, GPIO_OUT);
@@ -83,36 +36,26 @@ void init_alarms() {
   pwm_set_wrap(slice_num, 31);
   pwm_set_chan_level(slice_num, channel, 15);
   
-  printf("Print notes\n");
-  for (int i=0; i<11; i++) {
-    printf("0x%x ", allNotes[i]);
-  }
-  printf("\n");
-
   int index = 0;
   
   // Allocate
   SONGS = get_num_of_songs();
-  DEBUG_PRINT(("Found %d songs\n", SONGS);)
+  DEBUG_PRINT(("Found %d songs", SONGS));
   songs = malloc(sizeof(note_t**)*SONGS);
-  printf("songs: 0x%x\n  ", songs);
-  for (int song=0; song<SONGS; song++) {
-    printf("songs[%d]: 0x%x  ", song, songs[song]);
-  }
-  printf("\n");
 
   for (int song=0; song<SONGS; song++) {
     songs[song] = &allNotes[index];
     while (allNotes[++index] != NULL) {}
     index++;
   }
-  printf("songs: 0x%x\n  ", songs);
+# ifdef DEBUG
+  printf(" (0x%x)\n", songs);
   for (int song=0; song<SONGS; song++) {
-    printf("songs[%d]: 0x%x  ", song, songs[song]);
+    printf("  songs[%d]: 0x%x", song, songs[song]);
   }
   printf("\n");
 
-  printf("Print songs (%d)\n", SONGS);
+  printf("Print notes\n");
   for (int song=0; song<SONGS; song++) {
     note_t *note = *songs[song];
     int i = 1;
@@ -122,6 +65,7 @@ void init_alarms() {
     } while (note != NULL);
     printf("\n");
   }
+# endif
 }
 
 
@@ -148,12 +92,14 @@ int get_number_of_songs() {
 }
 
 void start_song(int songNum) {
+  DEBUG_PRINT(("Start song %d\n", songNum));
   songState.start = songs[songNum];
   songState.index = 0;
   songState.phase = 0;
 }
 
 void stop_song() {
+  DEBUG_PRINT(("Stop song\n"));
   uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
   pwm_set_enabled(slice_num, false);
   drive_led_high(false);
@@ -169,21 +115,18 @@ int64_t update_running_song(void) {
   //    1. Silent, return waitDuration.
   //note_t **notes = songList[songState.num]->notes;
   note_t *note = *(songState.start + songState.index);
-  printf("songState: %d\n", songState.index);
   int64_t retval;
   uint32_t sysFreq = clock_get_hz(clk_sys);
   uint slice_num = pwm_gpio_to_slice_num(BUZ_PIN);
   if (songState.phase == 0) {
     pwm_set_clkdiv(slice_num, sysFreq/note->freq);
     pwm_set_enabled(slice_num, true);
-    printf("  Play %d Hz for %d ms\n", note->freq, note->playDuration);
     songState.phase = 1;
     retval = note->playDuration;
     drive_led_high(true);
   } else {
     // phase 1
     pwm_set_enabled(slice_num, false);
-    printf("  Silent for %d ms\n", note->waitDuration);
     songState.index = (*(songState.start+songState.index+1) == NULL) ? 
       0 : songState.index + 1;
     songState.phase = 0;
@@ -201,10 +144,8 @@ int add_alarm(datetime_t *time, int song, bool active) {
   deep_copy_time(time, newAlarm->time);
   newAlarm->song = song;
   newAlarm->active = active;
-# ifdef NDEBUG
-  printf("Adding alarm:");
-  node_print(newAlarm);
-# endif
+  DEBUG_PRINT(("Adding alarm:"));
+  node_print(newAlarm, 2);
   if (node_add(&alarms, newAlarm)) {
     // Failed to add. Datetime occupied.
     DEBUG_PRINT(("Failed to add new alarm. There is already an alarm at this time.\n"));
@@ -274,8 +215,10 @@ bool is_alarm_in_1_min(node_t *nextNode) {
 }
 
 void print_all_alarms() {
+# ifdef DEBUG
   printf("Printing all alarms.\n");
   node_print_all(alarms);
+# endif
 }
 
 void remove_alarm(datetime_t *time, node_t *copy) {

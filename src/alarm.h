@@ -24,8 +24,6 @@
 #include <pins.h>
 #include <node.h>
 
-void sound_test();
-
 void init_alarms();
 
 int get_number_of_songs();

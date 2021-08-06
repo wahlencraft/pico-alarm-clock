@@ -131,13 +131,13 @@ static void in_or_decrement_time_setting(
   int maxForState[] = {7, 24, 60};
   int8_t *timeStart = &(time->dotw);
   int value = (int) timeStart[settingState];
-  printf("Increment %d", value);
+  DEBUG_PRINT(("Increment %d", value));
   if (increment) {
     increment_with_wrap(&value, maxForState[settingState]);
   } else {
     decrement_with_wrap(&value, maxForState[settingState]);
   }
-  printf(" to %d\n", value);
+  DEBUG_PRINT((" to %d\n", value));
   timeStart[settingState] = (int8_t) value;
 }
 
@@ -209,7 +209,7 @@ int set_clock_setting(const int setting) {
         // initilize "set clock mode"
         clk_t setClockState = CLK_DOTW;
         int8_t oldSec = -1;
-        printf("  setClockState: %d\n", setClockState);
+        DEBUG_PRINT(("  setClockState: %d\n", setClockState));
         rtc_get_datetime(&time);
         show_setting(setClockState, CLK, &time, true);
         while (setClockMode) {
@@ -233,7 +233,7 @@ int set_clock_setting(const int setting) {
                */
               setClockState = (setClockState + 1) % CLK_LEN;
               // update display
-              printf("  setClockState: %d\n", setClockState);
+              DEBUG_PRINT(("  setClockState: %d\n", setClockState));
               rtc_get_datetime(&time);
               show_setting(setClockState, CLK, &time, true);
               break;
@@ -297,7 +297,7 @@ int set_clock_setting(const int setting) {
 }
 
 int set_alarm_setting(const int setting) {
-  printf("Setting = %d\n", setting);
+  DEBUG_PRINT(("Setting = %d\n", setting));
   TM1637_display_word("ALAr", true);
   int button;
   while (true) {
@@ -325,7 +325,7 @@ int set_alarm_setting(const int setting) {
                 get_next_alarm(&alarm, true);
                 // Show first alarm
                 show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
-                printf("Alarm %d at ", alarmIndex);
+                DEBUG_PRINT(("Alarm %d at ", alarmIndex));
                 print_time(alarm.time, 0);
                }
                while (chooseAlarmState == C_ALM_ALM) {
@@ -347,10 +347,8 @@ int set_alarm_setting(const int setting) {
                    // update display
                    show_setting(setAlarmState, ALM, alarm.time, true);
                    show_if_alarm_active(&alarm);
-#                  ifdef NDEBUG
-                     printf("  setAlarmState: %d\n", setAlarmState);
-                     print_all_alarms();
-#                  endif
+                   DEBUG_PRINT(("  setAlarmState: %d\n", setAlarmState));
+                   print_all_alarms();
                    bool playSongDemo = false;
                    alarm_id_t songID;
                    while (editAlarm || createNewAlarm) {
@@ -375,7 +373,7 @@ int set_alarm_setting(const int setting) {
                          }
 
                          setAlarmState = (setAlarmState + 1) % ALM_LEN;
-                         printf("  setAlarmState: %d\n", setAlarmState);
+                         DEBUG_PRINT(("  setAlarmState: %d\n", setAlarmState));
                          // update display
                          switch (setAlarmState) {
                            case ALM_SONG:
@@ -446,10 +444,10 @@ int set_alarm_setting(const int setting) {
                              }
                              break;
                            case ALM_ACTIVE:
-                             printf("Active before: %d\n", alarm.active);
+                             DEBUG_PRINT(("Active before: %d\n", alarm.active));
                              toggle_alarm_active(&alarm);
                              show_if_alarm_active(&alarm);
-                             printf("Active after: %d\n", alarm.active);
+                             DEBUG_PRINT(("Active after: %d\n", alarm.active));
                              break;
                            case ALM_DELETE:
                              TM1637_display_word("Conf", true);
@@ -504,7 +502,7 @@ int set_alarm_setting(const int setting) {
                                alarmIndex = 0;
 
                                // update display
-                               printf("  setAlarmState: %d\n", setAlarmState);
+                               DEBUG_PRINT(("  setAlarmState: %d\n", setAlarmState));
                                show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
                              } else {
                                // Failed to add alarm. Flash the display to
@@ -540,7 +538,7 @@ int set_alarm_setting(const int setting) {
                      } else {
                        // Next alarm found. Show it.
                        show_alarm(C_ALM_ALM, ++alarmIndex, &alarm, false);
-                       printf("Alarm %d at ", alarmIndex);
+                       DEBUG_PRINT(("Alarm %d at ", alarmIndex));
                        print_time(alarm.time, 0);
                      }
                      break;
@@ -562,10 +560,8 @@ int set_alarm_setting(const int setting) {
                            show_alarm(C_ALM_ALM, alarmIndex, &alarm, true);
                            break;
                          case RIGHT_BUTTON:
-#                          ifdef NDEBUG
-                             printf("  Removing alarm %d at", alarmIndex);
-                             print_time(alarm.time, 1);
-#                          endif
+                           DEBUG_PRINT(("  Removing alarm %d at", alarmIndex));
+                           print_time(alarm.time, 1);
                            print_all_alarms();
                            removing = false;
                            datetime_t timeCopy = *(alarm.time);
@@ -578,7 +574,7 @@ int set_alarm_setting(const int setting) {
                                chooseAlarmState++;
                              } else {
                                show_alarm(C_ALM_ALM, ++alarmIndex, &alarm, true);
-                               printf("  Alarm %d at ", alarmIndex);
+                               DEBUG_PRINT(("  Alarm %d at ", alarmIndex));
                                print_time(alarm.time, 0);
                              }
                              remove_alarm(&timeCopy, NULL);
@@ -620,7 +616,7 @@ int set_alarm_setting(const int setting) {
                      break;
                    case RIGHT_BUTTON:
                      // Create new alarm
-                     printf("  Create new alarm\n");
+                     DEBUG_PRINT(("  Create new alarm\n"));
                      createNewAlarm = true;
                      chooseAlarmState = C_ALM_ALM;
                      break;
@@ -628,7 +624,7 @@ int set_alarm_setting(const int setting) {
                }
                break;
              case C_ALM_DONE:
-               printf(("Enter choose alarm: done\n"));
+               DEBUG_PRINT(("Enter choose alarm: done\n"));
                show_alarm(C_ALM_DONE, -1, NULL, false);
                while (chooseAlarmState == C_ALM_DONE) {
                  button = fetch_button_with_irq_off();
@@ -659,7 +655,7 @@ int set_alarm_setting(const int setting) {
 }
 
 int done_setting(const int setting) {
-  printf("Setting = %d\n", setting);
+  DEBUG_PRINT(("Setting = %d\n", setting));
   TM1637_display_word("done", true);
   int button;
   while (true) {

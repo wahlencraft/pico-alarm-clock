@@ -123,16 +123,18 @@ int main() {
 
   struct GlobBinder globalStruct = {.sleepMode = true, .buttonBuffer = 0};
   state = &globalStruct;
+  
+  stdio_init_all();
+  uart_default_tx_wait_blocking();
 
   // Initiate
-  stdio_init_all();
   TM1637_init(CLK_PIN, DIO_PIN);
   setup_button(LEFT_BUTTON);
   setup_button(MIDDLE_BUTTON);
   setup_button(RIGHT_BUTTON);
+  DEBUG_WAIT((100));
   init_alarms();
 
-  DEBUG_PRINT(("\n---START TEST---\n"));
   TM1637_clear();
   // Start the RTC
   rtc_init();
@@ -160,7 +162,6 @@ int main() {
   #define SETT_ALARM 3
   #define SETT_DONE 4
 
-  printf("Start main loop\n");
   display_h_min();
   state->sleepMode = true;
   state->alarmMode = false;
@@ -168,6 +169,8 @@ int main() {
 
   node_t *runningAlarm = malloc(sizeof(runningAlarm));
   runningAlarm->time = malloc(sizeof(datetime_t));
+
+  DEBUG_PRINT(("\nSTART MAIN LOOP\n"));
   // Main loop
   //
   // if alarmMode:
@@ -178,16 +181,14 @@ int main() {
   // else: (button interupt)
   //    open settings menu
   while (true) {
-#   ifdef NDEBUG
-      printf("\n");
-      print_current_time();
-      print_all_alarms();
-#   endif
+    DEBUG_PRINT(("\n"));
+    print_current_time();
+    print_all_alarms();
     if (state->alarmMode) {
       rtc_disable_alarm();
       start_song(runningAlarm->song);
       alarm_id_t almID = add_alarm_in_us(0, alarm_callback, NULL, true);
-      printf("Alarm %d started\n", almID);
+      DEBUG_PRINT(("Alarm %d started\n", almID));
       while (state->alarmMode) {
         if (alarm_timeout()) {
           state->alarmMode = false;
@@ -199,10 +200,8 @@ int main() {
       stop_song();
     } else if (state->sleepMode) {
       if (is_alarm_in_1_min(runningAlarm)) {
-#       ifdef NDEBUG
-          printf("Found Alarm! Fire at ");
-          print_time(runningAlarm->time, 0);
-#       endif
+        DEBUG_PRINT(("Found Alarm! Fire at "));
+        print_time(runningAlarm->time, 0);
         sleep_to_next_alarm(runningAlarm);
       } else {
         sleep_to_next_min();

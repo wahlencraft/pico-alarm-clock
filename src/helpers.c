@@ -87,13 +87,16 @@ void decrement_with_wrap(int *num, int wrap) {
 }
 
 void print_current_time() {
+# ifdef DEBUG
   datetime_t t;
   rtc_get_datetime(&t);
   printf("Current ");
   print_time(&t, 0);
+# endif
 }
 
 void print_time(datetime_t *time, int indent) {
+# ifdef DEBUG
   char *weekdays[] = {
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
   };
@@ -103,5 +106,6 @@ void print_time(datetime_t *time, int indent) {
   printf("time: %s %d:%02d:%02d\n",
       weekdays[time->dotw], time->hour, time->min, time->sec
       );
+# endif
 }
 

@@ -1,6 +1,7 @@
 #include <node.h>
 
 void node_print_all(node_t *head) {
+# ifdef DEBUG
   printf("Printing nodes:\n");
   if (head == NULL) {
     // list is empty
@@ -9,27 +10,33 @@ void node_print_all(node_t *head) {
   }
   node_t *current = head;
   while (current != NULL) {
-    node_print(current);
+    node_print(current, 2);
     current = current->next;
   }
+# endif
 }
 
-void node_print(node_t *node) {
+void node_print(node_t *node, int indent) {
+# ifdef DEBUG
+  while (indent--) {
+    printf(" ");
+  }
   if (node == NULL) {
     // list is empty
-    printf("  List is empty\n");
+    printf("List is empty\n");
     return;
   }
-  printf("  time [0x%x]: D%d %02d:%02d:%02d song: %d, active: %d, addr: 0x%x, next: 0x%x\n",
+  printf("time [0x%x]: D%d %02d:%02d:%02d song: %d, active: %d, addr: 0x%x, next: 0x%x\n",
       node->time,
       node->time->dotw, node->time->hour, node->time->min, node->time->sec,
       node->song, node->active, node, node->next
       );
+# endif
 }
 
 int node_add(node_t **head, node_t *newNode) {
   DEBUG_PRINT(("Adding to list: "));
-  node_print(newNode);
+  node_print(newNode, 2);
   if (node_is_empty(*head)) {
     // Singular case. This is an empty list
     DEBUG_PRINT(("List empty, adding first item\n"));
@@ -47,9 +54,9 @@ int node_add(node_t **head, node_t *newNode) {
     case DATETIME_SAME:
       DEBUG_PRINT(("WARNING: New node at same time as head\n"));
       DEBUG_PRINT(("  New:"));
-      node_print(newNode);
+      node_print(newNode, 4);
       DEBUG_PRINT(("  Head:"));
-      node_print(*head);
+      node_print(*head, 4);
       return EXIT_FAILURE;
   }
   node_t *last = *head;
@@ -79,7 +86,7 @@ int node_add(node_t **head, node_t *newNode) {
         return EXIT_FAILURE;
     }
   }
-  // Run out of list. Append at end
+  // Ran out of list. Append at end
   DEBUG_PRINT(("Appending\n"));
   last->next = newNode;
   newNode->next = NULL;
@@ -103,8 +110,8 @@ int node_get_next_from_time(datetime_t *time, node_t *head, node_t *foundNode) {
         return EXIT_FAILURE;
       }
   }
-  // We run out of nodes. There is no node after the specified time.
-  printf(" Run out of nodes.\n");
+  // We ran out of nodes. There is no node after the specified time.
+  DEBUG_PRINT((" Ran out of nodes.\n"));
   foundNode = NULL;
   return EXIT_FAILURE;
 }
@@ -168,35 +175,3 @@ int node_remove(node_t **head, datetime_t *time, node_t *copy) {
 int node_is_empty(node_t *head) {
   return (head == NULL);
 }
-
-int node_test(void) {
-  DEBUG_PRINT(("-NODE TEST-\n"));
-  datetime_t t1 = {
-    .year = 1970,
-    .month = 1,
-    .day = 1,
-    .dotw = 1, // 0 is Sunday
-    .hour = 17,
-    .min = 35,
-    .sec = 2
-  };
-  datetime_t t2 = {
-    .year = -1,
-    .month = -1,
-    .day = -1,
-    .dotw = 1, // 0 is Sunday
-    .hour = 17,
-    .min = -1,
-    .sec = 0
-  };
-  datetime_t t3 = {
-    .year = -1,
-    .month = -1,
-    .day = -1,
-    .dotw = 1, // 0 is Sunday
-    .hour = 17,
-    .min = 20,
-    .sec = 0
-  };
-}
-
