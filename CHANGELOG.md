@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [1.0.0] - 2021-08-09
 ### Added
 - You can now delete an alarm directly from the alarm edit menu.
 - You can now listen to a song directly from the alarm edit menu.
