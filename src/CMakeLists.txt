@@ -13,3 +13,5 @@ target_link_libraries(alarm-clock
   hardware_sleep
   hardware_pwm
   )
+
+pico_add_extra_outputs(alarm-clock)   # uf2 output
