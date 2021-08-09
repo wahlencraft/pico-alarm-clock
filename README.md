@@ -36,6 +36,15 @@ time based events.
 ![image](images/circuit.png)
 
 ### Load Code
+A .elf and .uf2 binary can be downloaded for 1.0 or later. You can also clone the repository and build from source. Then the files will apear in the `build/src` directory.
+
+#### UF2
+Hold down the bootsel button and plug Rasperry Pi Pico into a USB port on your computer (Windows or Linux). The Pico will mount as a USB Mass Storage
+Device. Drag and droop the .uf2 file on the Pico.
+
+### ELF
+The .elf file can be loaded to the pico over UART. This is most easily done from a Rasperry Pi (computer), but can also be done with another Pico using Picoprobe. See [Getting started with Raspberry Pi Pico: Appendix A](https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf)
+
 If loading code over UART (from for example a Raspberry Pi) some unexpected
 behavior arises.
 
